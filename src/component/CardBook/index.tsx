@@ -10,7 +10,7 @@ const CardBook = ({
   imagen,
   id,
 }: IBook) => {
-  const shotTitle = (title: string) => {
+  const shotTitle = (title: string = "") => {
     if (title.length > 20) {
       return title.substring(0, 20) + "...";
     }

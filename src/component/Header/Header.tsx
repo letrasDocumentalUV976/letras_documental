@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CiLogout } from "react-icons/ci";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { IoClose } from "react-icons/io5";
@@ -12,13 +12,16 @@ import Image from "next/image";
 
 const Header = () => {
   const [active, setActive] = useState(false);
+  const [isLogged, setIsLogged] = useState(false);
 
   const handleClick = () => {
     setActive(!active);
   };
 
-  const isLogged =
-    typeof window !== "undefined" && localStorage.getItem("autenticado");
+  useEffect(() => {
+    const autenticado = localStorage.getItem("autenticado");
+    setIsLogged(Boolean(autenticado));
+  }, []);
 
   const handleLogout = () => {
     if (typeof window !== "undefined") {
