@@ -26,8 +26,9 @@ const Index = () => {
     dispatch(fetchBooks());
   }, [dispatch, setValue]);
 
-  const filterBooks = books.filter((book) =>
-    book.title?.toLowerCase().includes(watch("search")?.toLowerCase())
+  const search = watch("search") || "";
+  const filteredBooks = books.filter((book: Book) =>
+    book.title?.toLowerCase().includes(search.toLowerCase())
   );
 
   if (booksStatus === "loading" || booksStatus === "idle") {
@@ -35,32 +36,31 @@ const Index = () => {
   }
 
   return (
-    <>
-      <div className="flex flex-row justify-between items-center p-5">
-        <p className="text-2xl font-bold">Biblioteca</p>
-        <div className="w-[200px] lg:w-[400px]">
+    <div className="mx-auto w-full max-w-7xl">
+      <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-2xl font-bold text-gray-800">Biblioteca</h2>
+        <div className="w-full sm:w-[220px] lg:w-[320px]">
           <TextField
             label="Búsqueda"
-            placeholder="Búsqueda"
+            placeholder="Buscar por título..."
             value={watch("search")}
-            type={"text"}
+            type="text"
             isLabel={false}
             {...register("search")}
           />
         </div>
       </div>
-      {filterBooks.length > 0 ? (
-        <>
-          <div className="grid items-center grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 p-5 w-full">
-            {filterBooks?.map((book: Book, index: number) => (
-              <CardBook key={index} {...book} />
-            ))}
-          </div>
-        </>
+
+      {filteredBooks.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredBooks.map((book: Book) => (
+            <CardBook key={book.id} book={book} href={`/library/${book.id}`} />
+          ))}
+        </div>
       ) : (
         <Empty />
       )}
-    </>
+    </div>
   );
 };
 
