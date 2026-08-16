@@ -1,6 +1,6 @@
 "use client";
 
-import { getFecha } from "@/utils/Utils";
+import { getFecha, isPastDate } from "@/utils/Utils";
 import ModalPrestamo from "@/views/prestamo";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -51,9 +51,16 @@ const Index = () => {
       });
   };
 
-  const sendEmail = (email: string) => {
-    fetch(`/api/email?correo=${email}`, {
+  const sendEmail = (loan: Loan) => {
+    fetch("/api/email", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: loan.student.email,
+        studentName: loan.student.name,
+        bookTitle: loan.book.title,
+        returnDate: loan.returnDate,
+      }),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -91,8 +98,7 @@ const Index = () => {
         <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {loans.map((loan) => {
             const isOverdue =
-              loan.status !== "Returned" &&
-              loan.returnDate < new Date().toISOString();
+              loan.status !== "Returned" && isPastDate(loan.returnDate);
             return (
               <CardLoan
                 key={loan.id}
@@ -104,7 +110,7 @@ const Index = () => {
                       {isOverdue && (
                         <button
                           type="button"
-                          onClick={() => sendEmail(loan.student.email)}
+                          onClick={() => sendEmail(loan)}
                           className="rounded-md border border-gray-300 px-2 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50"
                         >
                           Solicitar Devolución
