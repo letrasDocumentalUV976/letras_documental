@@ -19,8 +19,10 @@ import {
   fetchBooks,
   fetchStudents,
   selectBooks,
+  selectBooksStatus,
   selectLoans,
   selectStudents,
+  selectStudentsStatus,
   useV1Dispatch,
   useV1Selector,
 } from "@/store";
@@ -60,7 +62,9 @@ const FormField = ({
 const Index = ({ closeModal, openModal }: Props) => {
   const dispatch = useV1Dispatch();
   const students = useV1Selector(selectStudents);
+  const studentsStatus = useV1Selector(selectStudentsStatus);
   const books = useV1Selector(selectBooks);
+  const booksStatus = useV1Selector(selectBooksStatus);
   const loans = useV1Selector(selectLoans);
 
   const {
@@ -104,9 +108,9 @@ const Index = ({ closeModal, openModal }: Props) => {
   );
 
   useEffect(() => {
-    dispatch(fetchStudents());
-    dispatch(fetchBooks());
-  }, [dispatch]);
+    if (studentsStatus === "idle") dispatch(fetchStudents());
+    if (booksStatus === "idle") dispatch(fetchBooks());
+  }, [dispatch, studentsStatus, booksStatus]);
 
   const onSubmitStudent = (data: FieldValues) => {
     setIsSubmittingStudent(true);
