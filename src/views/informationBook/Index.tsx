@@ -3,6 +3,7 @@
 import Location from "@/component/Location/Location";
 import { fetchBooks, selectBooks, useV1Dispatch, useV1Selector } from "@/store";
 import { Book } from "@/types";
+import { parseTypeTags } from "@/utils/Utils";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -77,10 +78,17 @@ const Index = () => {
               </h1>
               <p className="mt-1 text-gray-500">{book.author}</p>
 
-              {book.type && (
-                <span className="mt-3 inline-block w-fit rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-                  {book.type}
-                </span>
+              {parseTypeTags(book.type).length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1">
+                  {parseTypeTags(book.type).map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-block w-fit rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               )}
 
               <div className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">

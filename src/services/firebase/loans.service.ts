@@ -10,6 +10,15 @@ import {
 
 export const getLoans = () => getCollection<Loan>(LOANS_COLLECTION);
 
+export const hasActiveLoanForBook = async (
+  bookId: string
+): Promise<boolean> => {
+  const loans = await getLoans();
+  return loans.some(
+    (loan) => loan.book.id === bookId && loan.status === "Loaned"
+  );
+};
+
 export const getLoanById = (id: string) =>
   getDocumentById<Loan>(LOANS_COLLECTION, id);
 

@@ -11,3 +11,9 @@ export const convertToBase64 = (file: File) => {
     reader.onerror = (error) => reject(error);
   });
 };
+
+export const parseTypeTags = (type?: string): string[] =>
+  (type ?? "")
+    .split(",")
+    .map((tag) => tag.trim().toUpperCase())
+    .filter(Boolean);

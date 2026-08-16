@@ -1,4 +1,5 @@
 import {
+  BOOK_LOANED_ERROR,
   deleteBook,
   getBookById,
   updateBook,
@@ -27,7 +28,10 @@ export async function PUT(request: Request, { params }: RouteContext) {
     const payload = (await request.json()) as Partial<BookInput>;
     await updateBook(id, payload);
     return successResponse(null, "Book updated successfully");
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === BOOK_LOANED_ERROR) {
+      return errorResponse(error.message, 409);
+    }
     return errorResponse("Failed to update book", 500);
   }
 }
@@ -37,7 +41,10 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
   try {
     await deleteBook(id);
     return successResponse(null, "Book deleted successfully");
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === BOOK_LOANED_ERROR) {
+      return errorResponse(error.message, 409);
+    }
     return errorResponse("Failed to delete book", 500);
   }
 }

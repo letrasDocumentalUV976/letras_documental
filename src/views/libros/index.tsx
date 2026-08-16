@@ -66,8 +66,12 @@ const Index = () => {
       .then(() => {
         toast.success("Libro eliminado correctamente");
       })
-      .catch(() => {
-        toast.error("Error al eliminar el libro");
+      .catch((error) => {
+        const message =
+          error && typeof error === "object" && "message" in error
+            ? (error as { message: string }).message
+            : null;
+        toast.error(message || "Error al eliminar el libro");
       })
       .finally(() => {
         setDeletingId(null);
@@ -98,32 +102,46 @@ const Index = () => {
 
       {filteredBooks.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredBooks.map((book: Book) => (
-            <CardBook
-              key={book.id}
-              book={book}
-              unavailable={loanedBookIds.has(book.id)}
-              actions={
-                <>
-                  <button
-                    onClick={() => router.push(`/books/edit/${book.id}`)}
-                    aria-label={`Editar ${book.title}`}
-                    className="rounded-md p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary"
-                  >
-                    <MdModeEditOutline size={20} />
-                  </button>
-                  <button
-                    onClick={() => setPendingDelete(book)}
-                    disabled={deletingId === book.id}
-                    aria-label={`Eliminar ${book.title}`}
-                    className="rounded-md p-2 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <MdDelete size={20} />
-                  </button>
-                </>
-              }
-            />
-          ))}
+          {filteredBooks.map((book: Book) => {
+            const isLoaned = loanedBookIds.has(book.id);
+            return (
+              <CardBook
+                key={book.id}
+                book={book}
+                unavailable={isLoaned}
+                actions={
+                  <>
+                    <button
+                      onClick={() => router.push(`/books/edit/${book.id}`)}
+                      disabled={isLoaned}
+                      aria-label={`Editar ${book.title}`}
+                      title={
+                        isLoaned
+                          ? "No se puede editar: el libro está prestado"
+                          : undefined
+                      }
+                      className="rounded-md p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-500"
+                    >
+                      <MdModeEditOutline size={20} />
+                    </button>
+                    <button
+                      onClick={() => setPendingDelete(book)}
+                      disabled={isLoaned || deletingId === book.id}
+                      aria-label={`Eliminar ${book.title}`}
+                      title={
+                        isLoaned
+                          ? "No se puede eliminar: el libro está prestado"
+                          : undefined
+                      }
+                      className="rounded-md p-2 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-500"
+                    >
+                      <MdDelete size={20} />
+                    </button>
+                  </>
+                }
+              />
+            );
+          })}
         </div>
       ) : (
         <Empty />

@@ -21,8 +21,11 @@ import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import {
   createBook,
   fetchBooks,
+  fetchLoans,
   selectBooks,
   selectBooksStatus,
+  selectLoans,
+  selectLoansStatus,
   updateBook,
   useV1Dispatch,
   useV1Selector,
@@ -33,12 +36,14 @@ const FormField = ({
   placeholder,
   registration,
   error,
+  hint,
   type = "text",
 }: {
   label: string;
   placeholder?: string;
   registration: UseFormRegisterReturn;
   error?: string;
+  hint?: string;
   type?: string;
 }) => (
   <div className="flex flex-col gap-1">
@@ -51,6 +56,7 @@ const FormField = ({
       className="w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-gray-800 outline-none transition-colors placeholder:text-gray-400 focus:border-primary"
       {...registration}
     />
+    {hint && !error && <p className="text-xs text-gray-500">{hint}</p>}
     {error && <p className="text-sm text-red-500">{error}</p>}
   </div>
 );
@@ -59,6 +65,8 @@ const AgregarTexto = () => {
   const dispatch = useV1Dispatch();
   const books = useV1Selector(selectBooks);
   const booksStatus = useV1Selector(selectBooksStatus);
+  const loans = useV1Selector(selectLoans);
+  const loansStatus = useV1Selector(selectLoansStatus);
   const [image, setImage] = useState<string>("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [shelfSelected, setShelfSelected] = useState<Shelf>("2");
@@ -123,6 +131,11 @@ const AgregarTexto = () => {
   };
 
   const onSubmit = (data: FieldValues) => {
+    if (isLoaned) {
+      toast.error("No se puede editar un libro que está prestado");
+      return;
+    }
+
     setIsSubmitting(true);
     const input = {
       title: data.title,
@@ -150,9 +163,14 @@ const AgregarTexto = () => {
         );
         router.push("/books");
       })
-      .catch(() => {
+      .catch((error) => {
+        const message =
+          error && typeof error === "object" && "message" in error
+            ? (error as { message: string }).message
+            : null;
         toast.error(
-          id ? "Error al actualizar el libro" : "Error al agregar el libro"
+          message ||
+            (id ? "Error al actualizar el libro" : "Error al agregar el libro")
         );
       })
       .finally(() => setIsSubmitting(false));
@@ -177,10 +195,15 @@ const AgregarTexto = () => {
   };
 
   useEffect(() => {
-    if (id && booksStatus === "idle") {
-      dispatch(fetchBooks());
-    }
-  }, [id, booksStatus, dispatch]);
+    if (!id) return;
+    if (booksStatus === "idle") dispatch(fetchBooks());
+    if (loansStatus === "idle") dispatch(fetchLoans());
+  }, [id, booksStatus, loansStatus, dispatch]);
+
+  const isLoaned = Boolean(
+    id &&
+      loans.some((loan) => loan.book.id === id && loan.status === "Loaned")
+  );
 
   useEffect(() => {
     if (!id) return;
@@ -213,9 +236,19 @@ const AgregarTexto = () => {
         Completa la información del libro y su ubicación física.
       </p>
 
+      {isLoaned && (
+        <div className="mb-6 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Este libro está prestado actualmente y no puede editarse hasta que
+          sea devuelto.
+        </div>
+      )}
+
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="flex flex-col gap-8 lg:flex-row lg:items-start"
+        className={clsx(
+          "flex flex-col gap-8 lg:flex-row lg:items-start",
+          isLoaned && "pointer-events-none opacity-60"
+        )}
       >
         <div className="flex flex-col items-center gap-2 lg:w-[300px] lg:shrink-0">
           <UploadImage
@@ -259,6 +292,7 @@ const AgregarTexto = () => {
               placeholder="Tipo"
               registration={register("type")}
               error={errors?.type?.message}
+              hint="Puedes agregar varios tipos separados por coma. Ej: Novela rusa, siglo XIX"
             />
 
             <FormField
@@ -355,7 +389,7 @@ const AgregarTexto = () => {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isLoaned}
               className="flex items-center justify-center gap-2 rounded-md bg-primary p-2 font-medium text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70 sm:w-1/4"
             >
               {isSubmitting && (

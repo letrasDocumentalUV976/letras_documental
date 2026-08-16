@@ -1,4 +1,5 @@
 import { Book } from "@/types";
+import { parseTypeTags } from "@/utils/Utils";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
@@ -13,6 +14,7 @@ interface CardBookProps {
 const CardBook = ({ book, href, actions, unavailable }: CardBookProps) => {
   const className =
     "flex h-full flex-col overflow-hidden rounded-xl bg-white shadow-md transition-shadow hover:shadow-lg";
+  const typeTags = parseTypeTags(book.type);
 
   const content = (
     <>
@@ -50,10 +52,17 @@ const CardBook = ({ book, href, actions, unavailable }: CardBookProps) => {
           <span>Páginas: {book.pageCount}</span>
         </div>
         <p className="line-clamp-1 text-xs text-gray-500">{book.publisher}</p>
-        {book.type && (
-          <span className="mt-2 inline-block w-fit rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-            {book.type}
-          </span>
+        {typeTags.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {typeTags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-block w-fit rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
         )}
       </div>
     </>
