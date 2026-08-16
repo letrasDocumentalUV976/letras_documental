@@ -7,9 +7,10 @@ interface CardBookProps {
   book: Book;
   href?: string;
   actions?: React.ReactNode;
+  unavailable?: boolean;
 }
 
-const CardBook = ({ book, href, actions }: CardBookProps) => {
+const CardBook = ({ book, href, actions, unavailable }: CardBookProps) => {
   const className =
     "flex h-full flex-col overflow-hidden rounded-xl bg-white shadow-md transition-shadow hover:shadow-lg";
 
@@ -27,6 +28,11 @@ const CardBook = ({ book, href, actions }: CardBookProps) => {
           <div className="flex h-full w-full items-center justify-center text-sm text-primary/40">
             Sin imagen
           </div>
+        )}
+        {unavailable && (
+          <span className="absolute right-2 top-2 rounded-md bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">
+            No disponible
+          </span>
         )}
       </div>
 

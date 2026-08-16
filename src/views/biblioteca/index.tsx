@@ -5,12 +5,15 @@ import TextField from "@/component/TextField/TextField";
 import { Book } from "@/types";
 import {
   fetchBooks,
+  fetchLoans,
   selectBooks,
   selectBooksStatus,
+  selectLoans,
+  selectLoansStatus,
   useV1Dispatch,
   useV1Selector,
 } from "@/store";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import Loading from "@/component/Loader/Loader";
 import Empty from "@/component/Empty/Empty";
@@ -19,16 +22,29 @@ const Index = () => {
   const dispatch = useV1Dispatch();
   const books = useV1Selector(selectBooks);
   const booksStatus = useV1Selector(selectBooksStatus);
+  const loans = useV1Selector(selectLoans);
+  const loansStatus = useV1Selector(selectLoansStatus);
   const { register, watch, setValue } = useForm();
 
   useEffect(() => {
     setValue("search", "");
-    dispatch(fetchBooks());
-  }, [dispatch, setValue]);
+    if (booksStatus === "idle") dispatch(fetchBooks());
+    if (loansStatus === "idle") dispatch(fetchLoans());
+  }, [dispatch, setValue, booksStatus, loansStatus]);
 
   const search = watch("search") || "";
   const filteredBooks = books.filter((book: Book) =>
     book.title?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const loanedBookIds = useMemo(
+    () =>
+      new Set(
+        loans
+          .filter((loan) => loan.status === "Loaned")
+          .map((loan) => loan.book.id)
+      ),
+    [loans]
   );
 
   if (booksStatus === "loading" || booksStatus === "idle") {
@@ -54,7 +70,12 @@ const Index = () => {
       {filteredBooks.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredBooks.map((book: Book) => (
-            <CardBook key={book.id} book={book} href={`/library/${book.id}`} />
+            <CardBook
+              key={book.id}
+              book={book}
+              href={`/library/${book.id}`}
+              unavailable={loanedBookIds.has(book.id)}
+            />
           ))}
         </div>
       ) : (

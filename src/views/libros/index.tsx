@@ -7,13 +7,16 @@ import { Book } from "@/types";
 import {
   deleteBook,
   fetchBooks,
+  fetchLoans,
   selectBooks,
   selectBooksStatus,
+  selectLoans,
+  selectLoansStatus,
   useV1Dispatch,
   useV1Selector,
 } from "@/store";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { MdModeEditOutline, MdDelete } from "react-icons/md";
@@ -25,6 +28,8 @@ const Index = () => {
   const dispatch = useV1Dispatch();
   const books = useV1Selector(selectBooks);
   const booksStatus = useV1Selector(selectBooksStatus);
+  const loans = useV1Selector(selectLoans);
+  const loansStatus = useV1Selector(selectLoansStatus);
   const router = useRouter();
   const { register, watch, setValue } = useForm();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -32,12 +37,23 @@ const Index = () => {
 
   useEffect(() => {
     setValue("search", "");
-    dispatch(fetchBooks());
-  }, [dispatch, setValue]);
+    if (booksStatus === "idle") dispatch(fetchBooks());
+    if (loansStatus === "idle") dispatch(fetchLoans());
+  }, [dispatch, setValue, booksStatus, loansStatus]);
 
   const search = watch("search") || "";
   const filteredBooks = books.filter((book: Book) =>
     book.title?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const loanedBookIds = useMemo(
+    () =>
+      new Set(
+        loans
+          .filter((loan) => loan.status === "Loaned")
+          .map((loan) => loan.book.id)
+      ),
+    [loans]
   );
 
   const confirmDelete = () => {
@@ -86,6 +102,7 @@ const Index = () => {
             <CardBook
               key={book.id}
               book={book}
+              unavailable={loanedBookIds.has(book.id)}
               actions={
                 <>
                   <button

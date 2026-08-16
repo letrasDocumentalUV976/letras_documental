@@ -32,8 +32,8 @@ const Index = () => {
 
   useEffect(() => {
     setValue("search", "");
-    dispatch(fetchUsers());
-  }, [dispatch, setValue]);
+    if (usersStatus === "idle") dispatch(fetchUsers());
+  }, [dispatch, setValue, usersStatus]);
 
   const search = watch("search") || "";
   const filteredUsers = users.filter(

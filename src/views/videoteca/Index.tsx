@@ -23,8 +23,8 @@ const Index = () => {
 
   useEffect(() => {
     setValue("search", "");
-    dispatch(fetchMovies());
-  }, [dispatch, setValue]);
+    if (moviesStatus === "idle") dispatch(fetchMovies());
+  }, [dispatch, setValue, moviesStatus]);
 
   const search = watch("search") || "";
   const filteredMovies = movies.filter((movie: Movie) =>
