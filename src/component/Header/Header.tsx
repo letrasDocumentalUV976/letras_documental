@@ -43,13 +43,11 @@ const Header = () => {
         </div>
 
         <ul className="text-white">
-          {isLogged && (
-            <li className="p-4 text-lg font-bold text-center">
-              <Link onClick={desactiveMenu} href={"/inicio"}>
-                Inicio
-              </Link>
-            </li>
-          )}
+          <li className="p-4 text-lg font-bold text-center">
+            <Link onClick={desactiveMenu} href={"/inicio"}>
+              Inicio
+            </Link>
+          </li>
 
           <li className="p-4 text-lg font-bold text-center">
             <Link onClick={desactiveMenu} href={"/biblioteca"}>
@@ -62,27 +60,21 @@ const Header = () => {
             </Link>
           </li>
 
-          {isLogged && (
-            <li className="p-4 text-lg font-bold text-center">
-              <Link onClick={desactiveMenu} href={"/libros"}>
-                Libros
-              </Link>
-            </li>
-          )}
-          {isLogged && (
-            <li className="p-4 text-lg font-bold text-center">
-              <Link onClick={desactiveMenu} href={"/pelicula"}>
-                Película
-              </Link>
-            </li>
-          )}
-          {isLogged && (
-            <li className="p-4 text-lg font-bold text-center">
-              <Link onClick={desactiveMenu} href={"/usuario"}>
-                Usuarios
-              </Link>
-            </li>
-          )}
+          <li className="p-4 text-lg font-bold text-center">
+            <Link onClick={desactiveMenu} href={"/libros"}>
+              Libros
+            </Link>
+          </li>
+          <li className="p-4 text-lg font-bold text-center">
+            <Link onClick={desactiveMenu} href={"/pelicula"}>
+              Película
+            </Link>
+          </li>
+          <li className="p-4 text-lg font-bold text-center">
+            <Link onClick={desactiveMenu} href={"/usuario"}>
+              Usuarios
+            </Link>
+          </li>
         </ul>
       </div>
     );
@@ -97,11 +89,9 @@ const Header = () => {
 
         <nav className="hidden lg:flex text-white">
           <ul className="flex flex-row">
-            {isLogged && (
-              <li className="p-4 text-lg font-bold text-center">
-                <Link href={"/inicio"}>Inicio</Link>
-              </li>
-            )}
+            <li className="p-4 text-lg font-bold text-center">
+              <Link href={"/inicio"}>Inicio</Link>
+            </li>
 
             <li className="p-4 text-lg font-bold text-center">
               <Link href={"/biblioteca"}>Biblioteca</Link>
@@ -110,21 +100,15 @@ const Header = () => {
               <Link href={"/videoteca"}>Videoteca</Link>
             </li>
 
-            {isLogged && (
-              <li className="p-4 text-lg font-bold text-center">
-                <Link href={"/libros"}>Libros</Link>
-              </li>
-            )}
-            {isLogged && (
-              <li className="p-4 text-lg font-bold text-center">
-                <Link href={"/pelicula"}>Película</Link>
-              </li>
-            )}
-            {isLogged && (
-              <li className="p-4 text-lg font-bold text-center">
-                <Link href={"/usuario"}>Usuarios</Link>
-              </li>
-            )}
+            <li className="p-4 text-lg font-bold text-center">
+              <Link href={"/libros"}>Libros</Link>
+            </li>
+            <li className="p-4 text-lg font-bold text-center">
+              <Link href={"/pelicula"}>Película</Link>
+            </li>
+            <li className="p-4 text-lg font-bold text-center">
+              <Link href={"/usuario"}>Usuarios</Link>
+            </li>
           </ul>
         </nav>
 

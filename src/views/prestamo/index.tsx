@@ -37,13 +37,6 @@ const Index = ({
   const [selectedBook, setSelectedBook] = useState<IBook | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<IStudent | null>(null);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (localStorage.getItem("autenticado") !== "true") {
-      window.location.href = "/biblioteca";
-    }
-  }, []);
-
   const onSubmit = async (data: FieldValues) => {
     if (!data.nombre || !data.matricula || !data.correo) {
       toast.error("Todos los campos son requeridos");

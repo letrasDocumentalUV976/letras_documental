@@ -23,13 +23,6 @@ const AgregarPelicula = () => {
     resolver: yupResolver(UserValidator),
   });
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (localStorage.getItem("autenticado") !== "true") {
-      window.location.href = "/biblioteca";
-    }
-  }, []);
-
   const onSubmit = async (data: FieldValues) => {
     data.id = params.id || "";
 

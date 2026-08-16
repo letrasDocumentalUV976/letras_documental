@@ -38,13 +38,6 @@ const AgregarPelicula = ({ setMovies }: IAgregarTextoProps) => {
     resolver: yupResolver(MovieValidator),
   });
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (localStorage.getItem("autenticado") !== "true") {
-      window.location.href = "/biblioteca";
-    }
-  }, []);
-
   const handleUpload = async (file: File) => {
     if (!file) return alert("Selecciona una imagen primero");
     const formData = new FormData();

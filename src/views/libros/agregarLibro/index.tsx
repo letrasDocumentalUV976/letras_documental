@@ -26,13 +26,6 @@ const AgregarTexto = ({ setBooks }: IAgregarTextoProps) => {
   const router = useRouter();
   const params = useParams();
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (localStorage.getItem("autenticado") !== "true") {
-      window.location.href = "/biblioteca";
-    }
-  }, []);
-
   const [selectedCell, setSelectedCell] = useState<{
     col: number;
     row: number;

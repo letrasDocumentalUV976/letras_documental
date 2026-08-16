@@ -80,13 +80,6 @@ const Index = ({ books, setBooks }: IProps) => {
       });
   };
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (localStorage.getItem("autenticado") !== "true") {
-      window.location.href = "/biblioteca";
-    }
-  }, []);
-
   if (loadingType.isLoading) return <Loading />;
 
   return (
