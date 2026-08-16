@@ -11,21 +11,26 @@ let cachedFirestore: Firestore | null = null;
 const getAdminApp = (): App => {
   if (adminApp) return adminApp;
 
-  adminApp =
-    getApps().find((app) => app.name === ADMIN_APP_NAME) ??
-    initializeApp(
-      {
-        credential: cert({
-          projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-          privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(
-            /\\n/g,
-            "\n"
-          ),
-        }),
-      },
-      ADMIN_APP_NAME
-    );
+  try {
+    adminApp =
+      getApps().find((app) => app.name === ADMIN_APP_NAME) ??
+      initializeApp(
+        {
+          credential: cert({
+            projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+            privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(
+              /\\n/g,
+              "\n"
+            ),
+          }),
+        },
+        ADMIN_APP_NAME
+      );
+  } catch (error) {
+    console.error("Firebase Admin initialization failed:", error);
+    throw error;
+  }
 
   return adminApp;
 };
