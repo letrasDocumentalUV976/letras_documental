@@ -1,57 +1,71 @@
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { PublicUser, User, UserInput } from "@/types";
-import { firestore } from "./app";
+import { PublicUser, UserInput } from "@/types";
+import { getAdminAuth, getAdminFirestore } from "./admin";
 import { USERS_COLLECTION } from "./collections";
-import { InvalidCredentialsError, UserNotFoundError } from "./errors";
-import {
-  createDocument,
-  deleteDocument,
-  getCollection,
-  getDocumentById,
-  updateDocument,
-} from "./repository";
 
-const toPublicUser = (user: User): PublicUser => ({
-  id: user.id,
-  name: user.name,
-  email: user.email,
+const usersCollection = () =>
+  getAdminFirestore().collection(USERS_COLLECTION);
+
+const toPublicUser = (
+  id: string,
+  data: FirebaseFirestore.DocumentData
+): PublicUser => ({
+  id,
+  name: data.name,
+  email: data.email,
 });
 
 export const getUsers = async (): Promise<PublicUser[]> => {
-  const users = await getCollection<User>(USERS_COLLECTION);
-  return users.map(toPublicUser);
+  const snapshot = await usersCollection().get();
+  return snapshot.docs.map((document) =>
+    toPublicUser(document.id, document.data())
+  );
 };
 
 export const getUserById = async (id: string): Promise<PublicUser | null> => {
-  const user = await getDocumentById<User>(USERS_COLLECTION, id);
-  return user ? toPublicUser(user) : null;
+  const document = await usersCollection().doc(id).get();
+  if (!document.exists) return null;
+  return toPublicUser(document.id, document.data()!);
 };
 
 export const createUser = async (input: UserInput): Promise<PublicUser> => {
-  const user = await createDocument<User>(USERS_COLLECTION, input);
-  return toPublicUser(user);
+  const userRecord = await getAdminAuth().createUser({
+    email: input.email,
+    password: input.password,
+    displayName: input.name,
+  });
+
+  await usersCollection().doc(userRecord.uid).set({
+    name: input.name,
+    email: input.email,
+  });
+
+  return { id: userRecord.uid, name: input.name, email: input.email };
 };
 
-export const updateUser = (id: string, input: Partial<UserInput>) =>
-  updateDocument(USERS_COLLECTION, id, input);
+export const updateUser = async (
+  id: string,
+  input: Partial<UserInput>
+): Promise<void> => {
+  const authUpdate: { email?: string; password?: string; displayName?: string } =
+    {};
+  if (input.email) authUpdate.email = input.email;
+  if (input.password) authUpdate.password = input.password;
+  if (input.name) authUpdate.displayName = input.name;
 
-export const deleteUser = (id: string) => deleteDocument(USERS_COLLECTION, id);
+  if (Object.keys(authUpdate).length > 0) {
+    await getAdminAuth().updateUser(id, authUpdate);
+  }
 
-export const authenticateUser = async (
-  email: string,
-  password: string
-): Promise<PublicUser> => {
-  const usersQuery = query(
-    collection(firestore, USERS_COLLECTION),
-    where("email", "==", email)
-  );
-  const snapshot = await getDocs(usersQuery);
-  if (snapshot.empty) {
-    throw new UserNotFoundError(email);
+  const profileUpdate: { name?: string; email?: string } = {};
+  if (input.name) profileUpdate.name = input.name;
+  if (input.email) profileUpdate.email = input.email;
+
+  if (Object.keys(profileUpdate).length > 0) {
+    await usersCollection().doc(id).set(profileUpdate, { merge: true });
   }
-  const user = snapshot.docs[0].data() as User;
-  if (user.password !== password) {
-    throw new InvalidCredentialsError(email);
-  }
-  return toPublicUser(user);
+};
+
+export const deleteUser = async (id: string): Promise<void> => {
+  await getAdminAuth().deleteUser(id);
+  await usersCollection().doc(id).delete();
 };

@@ -1,7 +1,8 @@
 "use client";
 
 import Header from "@/component/Header/Header";
-import { selectSessionUser, setSessionUser, useV1Dispatch, useV1Selector } from "@/store";
+import { setSessionUser, useV1Dispatch } from "@/store";
+import { subscribeToAuthChanges } from "@/services/firebase/auth.service";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
@@ -13,15 +14,13 @@ interface IndexProps {
 const Index = ({ children }: IndexProps) => {
   const path = usePathname();
   const dispatch = useV1Dispatch();
-  const sessionUser = useV1Selector(selectSessionUser);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!sessionUser) {
-      const storedUser = localStorage.getItem("user");
-      dispatch(setSessionUser(storedUser ? JSON.parse(storedUser) : null));
-    }
-  }, [sessionUser, dispatch]);
+    const unsubscribe = subscribeToAuthChanges((user) => {
+      dispatch(setSessionUser(user));
+    });
+    return unsubscribe;
+  }, [dispatch]);
 
   return (
     <>

@@ -6,5 +6,8 @@ export const UserValidator = yup.object({
     .string()
     .email("El correo no es valido")
     .required("El correo es requerido"),
-  password: yup.string().required("La contraseña es requerida"),
+  password: yup
+    .string()
+    .min(6, "La contraseña debe tener al menos 6 caracteres")
+    .required("La contraseña es requerida"),
 });

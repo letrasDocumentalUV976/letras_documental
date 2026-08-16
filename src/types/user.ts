@@ -1,14 +1,13 @@
-import { CreateInput, FirestoreId } from "./common";
+import { FirestoreId } from "./common";
 
 export interface User {
   id: FirestoreId;
   name: string;
   email: string;
-  password: string;
 }
 
-export type UserInput = CreateInput<User>;
+export type UserInput = Omit<User, "id"> & { password: string };
 
-export type PublicUser = Omit<User, "password">;
+export type PublicUser = User;
 
 export type SessionUser = PublicUser;

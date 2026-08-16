@@ -1,3 +1,4 @@
+import { getAdminAuthError } from "@/services/firebase/admin";
 import {
   deleteUser,
   getUserById,
@@ -27,8 +28,12 @@ export async function PUT(request: Request, { params }: RouteContext) {
     const payload = (await request.json()) as Partial<UserInput>;
     await updateUser(id, payload);
     return successResponse(null, "User updated successfully");
-  } catch {
-    return errorResponse("Failed to update user", 500);
+  } catch (error) {
+    const authError = getAdminAuthError(error);
+    return errorResponse(
+      authError?.message ?? "Failed to update user",
+      authError?.status ?? 500
+    );
   }
 }
 

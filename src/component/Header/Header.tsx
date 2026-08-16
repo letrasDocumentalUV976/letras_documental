@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CiLogout, CiLogin } from "react-icons/ci";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { IoClose } from "react-icons/io5";
@@ -9,6 +9,8 @@ import Logo from "../../../public/Logo.png";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { selectSessionUser, useV1Selector } from "@/store";
+import { signOutUser } from "@/services/firebase/auth.service";
 
 type NavLink = {
   href: string;
@@ -30,24 +32,16 @@ const privateLinks: NavLink[] = [
 
 const Header = () => {
   const [active, setActive] = useState(false);
-  const [isLogged, setIsLogged] = useState(false);
   const pathname = usePathname();
+  const sessionUser = useV1Selector(selectSessionUser);
+  const isLogged = Boolean(sessionUser);
 
   const handleClick = () => {
     setActive(!active);
   };
 
-  useEffect(() => {
-    const autenticado = localStorage.getItem("autenticado");
-    setIsLogged(Boolean(autenticado));
-  }, []);
-
   const handleLogout = () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("autenticado");
-      localStorage.removeItem("user");
-      window.location.reload();
-    }
+    signOutUser();
   };
 
   const desactiveMenu = () => {

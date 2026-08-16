@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { PublicUser } from "@/types";
-import { loginRequest } from "../api/authApi";
+import { mapAuthError, signIn } from "@/services/firebase/auth.service";
 import { RequestStatus } from "../requestStatus";
 
 export interface AuthState {
@@ -18,7 +18,13 @@ const initialState: AuthState = {
 export const login = createAsyncThunk<
   PublicUser,
   { email: string; password: string }
->("authV1/login", ({ email, password }) => loginRequest(email, password));
+>("authV1/login", async ({ email, password }) => {
+  try {
+    return await signIn(email, password);
+  } catch (error) {
+    throw new Error(mapAuthError(error));
+  }
+});
 
 const authSlice = createSlice({
   name: "authV1",

@@ -24,18 +24,15 @@ const Login = () => {
   } = useForm();
 
   const onSubmit = (data: FieldValues) => {
-    if (typeof window === "undefined") return;
     setIsSubmitting(true);
     dispatch(login({ email: data.email, password: data.password }))
       .unwrap()
-      .then((user) => {
-        localStorage.setItem("autenticado", "true");
-        localStorage.setItem("user", JSON.stringify(user));
+      .then(() => {
         toast.success("Usuario autenticado correctamente");
         router.push("/");
       })
-      .catch(() => {
-        toast.error("Correo o contraseña incorrectos");
+      .catch((error) => {
+        toast.error(error?.message || "Correo o contraseña incorrectos");
         setIsSubmitting(false);
       });
   };
