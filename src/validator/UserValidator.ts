@@ -14,14 +14,7 @@ export const UserInviteValidator = yup.object({
 });
 
 export const UserEditValidator = yup.object({
-  ...baseUserShape,
-  password: yup
-    .string()
-    .test(
-      "min-length-if-present",
-      "La contraseña debe tener al menos 6 caracteres",
-      (value) => !value || value.length >= 6
-    ),
+  name: yup.string().required("El nombre es requerido"),
 });
 
 export const SetPasswordValidator = yup.object({

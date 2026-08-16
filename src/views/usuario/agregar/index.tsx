@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import {
   useForm,
   FieldValues,
+  Resolver,
   UseFormRegisterReturn,
 } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -57,6 +58,8 @@ const FormField = ({
   </div>
 );
 
+type UserFormValues = { name: string; email?: string };
+
 const AgregarUsuario = () => {
   const dispatch = useV1Dispatch();
   const users = useV1Selector(selectUsers);
@@ -71,20 +74,18 @@ const AgregarUsuario = () => {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm({
+  } = useForm<UserFormValues>({
     mode: "onSubmit",
-    resolver: yupResolver(id ? UserEditValidator : UserInviteValidator),
+    resolver: yupResolver(
+      id ? UserEditValidator : UserInviteValidator
+    ) as Resolver<UserFormValues>,
   });
 
   const onSubmit = (data: FieldValues) => {
     setIsSubmitting(true);
 
     if (id) {
-      const input: Partial<UserInput> = {
-        name: data.name,
-        email: data.email,
-      };
-      if (data.password) input.password = data.password;
+      const input: Partial<UserInput> = { name: data.name };
 
       dispatch(updateUser({ id, input }))
         .unwrap()
@@ -110,7 +111,7 @@ const AgregarUsuario = () => {
   };
 
   const handleReset = () => {
-    reset({ name: "", email: "", password: "" });
+    reset(id ? { name: "" } : { name: "", email: "" });
   };
 
   useEffect(() => {
@@ -123,7 +124,7 @@ const AgregarUsuario = () => {
     if (!id) return;
     const user = users.find((item) => item.id === id);
     if (user) {
-      reset({ name: user.name, email: user.email, password: "" });
+      reset({ name: user.name });
     }
   }, [id, users, reset]);
 
@@ -142,7 +143,7 @@ const AgregarUsuario = () => {
       </h2>
       <p className="mb-8 text-sm text-gray-500">
         {id
-          ? "Completa la información del usuario."
+          ? "Actualiza el nombre del usuario."
           : "Se le enviará un correo con un enlace para que defina su propia contraseña e ingrese al sistema."}
       </p>
 
@@ -154,26 +155,13 @@ const AgregarUsuario = () => {
           error={errors?.name?.message}
         />
 
-        <FormField
-          label="Correo"
-          placeholder="correo@ejemplo.com"
-          registration={register("email")}
-          error={errors?.email?.message}
-          hint={
-            id
-              ? undefined
-              : "Recibirá un correo con un enlace para crear su contraseña"
-          }
-        />
-
-        {id && (
+        {!id && (
           <FormField
-            label="Contraseña"
-            placeholder="••••••••"
-            type="password"
-            registration={register("password")}
-            error={errors?.password?.message}
-            hint="Deja este campo en blanco para no cambiarla"
+            label="Correo"
+            placeholder="correo@ejemplo.com"
+            registration={register("email")}
+            error={errors?.email?.message}
+            hint="Recibirá un correo con un enlace para crear su contraseña"
           />
         )}
 

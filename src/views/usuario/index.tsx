@@ -3,6 +3,7 @@
 import CardUser from "@/component/CardUser";
 import LinkButton from "@/component/LinkButton/LinkButton";
 import TextField from "@/component/TextField/TextField";
+import { PROTECTED_USER_EMAILS } from "@/constants/users";
 import { PublicUser } from "@/types";
 import {
   deleteUser,
@@ -52,8 +53,8 @@ const Index = () => {
       .then(() => {
         toast.success("Usuario eliminado correctamente");
       })
-      .catch(() => {
-        toast.error("Error al eliminar el usuario");
+      .catch((error) => {
+        toast.error(error?.message || "Error al eliminar el usuario");
       })
       .finally(() => {
         setDeletingId(null);
@@ -97,14 +98,16 @@ const Index = () => {
                   >
                     <MdModeEditOutline size={20} />
                   </button>
-                  <button
-                    onClick={() => setPendingDelete(user)}
-                    disabled={deletingId === user.id}
-                    aria-label={`Eliminar ${user.name}`}
-                    className="rounded-md p-2 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <MdDelete size={20} />
-                  </button>
+                  {!PROTECTED_USER_EMAILS.includes(user.email) && (
+                    <button
+                      onClick={() => setPendingDelete(user)}
+                      disabled={deletingId === user.id}
+                      aria-label={`Eliminar ${user.name}`}
+                      className="rounded-md p-2 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <MdDelete size={20} />
+                    </button>
+                  )}
                 </>
               }
             />

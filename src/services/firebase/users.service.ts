@@ -1,4 +1,5 @@
 import { InvitationDetails, PublicUser, UserInput, UserInviteInput } from "@/types";
+import { PROTECTED_USER_EMAILS } from "@/constants/users";
 import { getAdminAuth, getAdminFirestore } from "./admin";
 import { USERS_COLLECTION } from "./collections";
 import {
@@ -116,7 +117,14 @@ export const updateUser = async (
   }
 };
 
+export const PROTECTED_USER_ERROR = "Este usuario no se puede eliminar";
+
 export const deleteUser = async (id: string): Promise<void> => {
+  const user = await getUserById(id);
+  if (user && PROTECTED_USER_EMAILS.includes(user.email)) {
+    throw new Error(PROTECTED_USER_ERROR);
+  }
+
   await getAdminAuth().deleteUser(id);
   await usersCollection().doc(id).delete();
 };

@@ -1,5 +1,6 @@
 import { getAdminAuthError } from "@/services/firebase/admin";
 import {
+  PROTECTED_USER_ERROR,
   deleteUser,
   getUserById,
   updateUser,
@@ -42,7 +43,10 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
   try {
     await deleteUser(id);
     return successResponse(null, "User deleted successfully");
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === PROTECTED_USER_ERROR) {
+      return errorResponse(error.message, 403);
+    }
     return errorResponse("Failed to delete user", 500);
   }
 }

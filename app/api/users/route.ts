@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     token = invitation.token;
 
     const origin = new URL(request.url).origin;
-    const activationUrl = `${origin}/activar-cuenta/${invitation.token}`;
+    const activationUrl = `${origin}/activate-account/${invitation.token}`;
 
     await sendUserInvitationEmail({
       to: invitation.email,
