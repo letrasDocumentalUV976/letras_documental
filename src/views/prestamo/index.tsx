@@ -357,6 +357,7 @@ const Index = ({ closeModal, openModal }: Props) => {
                         src={selectedBook.image}
                         alt={selectedBook.title}
                         fill
+                        sizes="64px"
                         className="object-cover"
                       />
                     ) : (

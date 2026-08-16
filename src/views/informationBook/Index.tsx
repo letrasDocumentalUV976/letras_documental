@@ -68,6 +68,7 @@ const Index = () => {
                 src={book.image}
                 alt={book.title}
                 fill
+                sizes="220px"
                 className="object-cover"
               />
             </div>
