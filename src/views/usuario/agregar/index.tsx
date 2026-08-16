@@ -131,7 +131,7 @@ const AgregarUsuario = () => {
   }, [id, users, reset]);
 
   return (
-    <div className="mx-auto w-full max-w-2xl p-5">
+    <div className="mx-auto w-full max-w-7xl p-5">
       <Link
         href="/users"
         className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-gray-500 transition-colors hover:text-primary"

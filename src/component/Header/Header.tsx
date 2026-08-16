@@ -25,7 +25,6 @@ const publicLinks: NavLink[] = [
 
 const privateLinks: NavLink[] = [
   { href: "/", label: "Inicio" },
-  { href: "/loans", label: "Préstamos" },
   { href: "/books", label: "Libros" },
   { href: "/movies", label: "Película" },
   { href: "/users", label: "Usuarios" },

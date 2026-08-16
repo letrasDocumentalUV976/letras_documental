@@ -59,7 +59,7 @@ const Index = () => {
   }
 
   return (
-    <>
+    <div className="mx-auto w-full max-w-7xl">
       <div className="flex flex-row items-center justify-between p-4 text-lg font-bold">
         <div>
           <h2>Hola, {sessionUser?.name} ✋🏻</h2>
@@ -161,7 +161,7 @@ const Index = () => {
           closeModal={() => setOpenModal(false)}
         />
       )}
-    </>
+    </div>
   );
 };
 
