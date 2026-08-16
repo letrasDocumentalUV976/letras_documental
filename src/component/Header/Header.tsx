@@ -67,7 +67,7 @@ const Header = () => {
       <header className="sticky top-0 z-40 w-full bg-primary shadow-md">
         <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 md:px-6">
           <Link
-            href={"/"}
+            href={isLogged ? "/" : "/library"}
             className="flex flex-row items-center gap-2 shrink-0"
           >
             <Image src={Logo} alt="Logo" width={44} height={44} />
