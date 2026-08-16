@@ -8,6 +8,13 @@ export interface User {
 
 export type UserInput = Omit<User, "id"> & { password: string };
 
+export type UserInviteInput = Pick<User, "name" | "email">;
+
+export interface InvitationDetails {
+  name: string;
+  email: string;
+}
+
 export type PublicUser = User;
 
 export type SessionUser = PublicUser;

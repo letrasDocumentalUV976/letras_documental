@@ -34,6 +34,14 @@ export const createDocument = async <T>(
   return createdDocument as T;
 };
 
+export const setDocument = async (
+  collectionName: string,
+  id: string,
+  data: DocumentData
+): Promise<void> => {
+  await getAdminFirestore().collection(collectionName).doc(id).set(data);
+};
+
 export const updateDocument = async (
   collectionName: string,
   id: string,

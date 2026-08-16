@@ -1,6 +1,13 @@
-import { PublicUser, UserInput } from "@/types";
+import { InvitationDetails, PublicUser, UserInput, UserInviteInput } from "@/types";
 import { getAdminAuth, getAdminFirestore } from "./admin";
 import { USERS_COLLECTION } from "./collections";
+import {
+  createInvitation,
+  deleteInvitation,
+  getInvitationByToken,
+  isInvitationExpired,
+  type UserInvitation,
+} from "./invitations.service";
 
 const usersCollection = () =>
   getAdminFirestore().collection(USERS_COLLECTION);
@@ -39,19 +46,51 @@ export const getUserByEmail = async (
   return toPublicUser(document.id, document.data());
 };
 
-export const createUser = async (input: UserInput): Promise<PublicUser> => {
+export const USER_ALREADY_EXISTS_ERROR =
+  "Ya existe un usuario registrado con este correo";
+
+export const inviteUser = async (
+  input: UserInviteInput
+): Promise<UserInvitation> => {
+  const existingUser = await getUserByEmail(input.email);
+  if (existingUser) {
+    throw new Error(USER_ALREADY_EXISTS_ERROR);
+  }
+
+  return createInvitation(input.name, input.email);
+};
+
+export const getInvitationForActivation = async (
+  token: string
+): Promise<InvitationDetails | null> => {
+  const invitation = await getInvitationByToken(token);
+  if (!invitation || isInvitationExpired(invitation)) return null;
+  return { name: invitation.name, email: invitation.email };
+};
+
+export const completeUserInvitation = async (
+  token: string,
+  password: string
+): Promise<PublicUser> => {
+  const invitation = await getInvitationByToken(token);
+  if (!invitation || isInvitationExpired(invitation)) {
+    throw new Error("El enlace de activación no es válido o ha expirado");
+  }
+
   const userRecord = await getAdminAuth().createUser({
-    email: input.email,
-    password: input.password,
-    displayName: input.name,
+    email: invitation.email,
+    password,
+    displayName: invitation.name,
   });
 
   await usersCollection().doc(userRecord.uid).set({
-    name: input.name,
-    email: input.email,
+    name: invitation.name,
+    email: invitation.email,
   });
 
-  return { id: userRecord.uid, name: input.name, email: input.email };
+  await deleteInvitation(token);
+
+  return { id: userRecord.uid, name: invitation.name, email: invitation.email };
 };
 
 export const updateUser = async (

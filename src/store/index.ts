@@ -22,3 +22,4 @@ export * from "./slices/loansSlice";
 export * from "./slices/moviesSlice";
 export * from "./slices/studentsSlice";
 export * from "./slices/usersSlice";
+export * from "./api/invitationsApi";

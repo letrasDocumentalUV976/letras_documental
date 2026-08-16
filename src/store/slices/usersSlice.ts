@@ -1,9 +1,9 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { PublicUser, UserInput } from "@/types";
+import { PublicUser, UserInput, UserInviteInput } from "@/types";
 import {
-  createUserRequest,
   deleteUserRequest,
   fetchUsersRequest,
+  inviteUserRequest,
   updateUserRequest,
 } from "../api/usersApi";
 import { RequestStatus } from "../requestStatus";
@@ -25,9 +25,11 @@ export const fetchUsers = createAsyncThunk<PublicUser[]>(
   () => fetchUsersRequest()
 );
 
-export const createUser = createAsyncThunk<PublicUser, UserInput>(
-  "usersV1/create",
-  (input) => createUserRequest(input)
+export const inviteUser = createAsyncThunk<void, UserInviteInput>(
+  "usersV1/invite",
+  async (input) => {
+    await inviteUserRequest(input);
+  }
 );
 
 export const updateUser = createAsyncThunk<
@@ -67,12 +69,6 @@ const usersSlice = createSlice({
         state.status = "failed";
         state.error = action.error.message ?? "Failed to fetch users";
       })
-      .addCase(
-        createUser.fulfilled,
-        (state, action: PayloadAction<PublicUser>) => {
-          state.items.push(action.payload);
-        }
-      )
       .addCase(updateUser.fulfilled, (state, action) => {
         const { id, input } = action.payload;
         const index = state.items.findIndex((user) => user.id === id);

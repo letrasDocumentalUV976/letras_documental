@@ -8,12 +8,9 @@ const baseUserShape = {
     .required("El correo es requerido"),
 };
 
-export const UserValidator = yup.object({
+export const UserInviteValidator = yup.object({
   ...baseUserShape,
-  password: yup
-    .string()
-    .min(6, "La contraseña debe tener al menos 6 caracteres")
-    .required("La contraseña es requerida"),
+  password: yup.string().notRequired(),
 });
 
 export const UserEditValidator = yup.object({
@@ -25,4 +22,15 @@ export const UserEditValidator = yup.object({
       "La contraseña debe tener al menos 6 caracteres",
       (value) => !value || value.length >= 6
     ),
+});
+
+export const SetPasswordValidator = yup.object({
+  password: yup
+    .string()
+    .min(6, "La contraseña debe tener al menos 6 caracteres")
+    .required("La contraseña es requerida"),
+  confirmPassword: yup
+    .string()
+    .oneOf([yup.ref("password")], "Las contraseñas no coinciden")
+    .required("Confirma tu contraseña"),
 });

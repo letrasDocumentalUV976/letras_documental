@@ -10,13 +10,16 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { UserValidator, UserEditValidator } from "@/validator/UserValidator";
+import {
+  UserInviteValidator,
+  UserEditValidator,
+} from "@/validator/UserValidator";
 import { UserInput } from "@/types";
 import { IoArrowBack } from "react-icons/io5";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import {
-  createUser,
   fetchUsers,
+  inviteUser,
   selectUsers,
   selectUsersStatus,
   updateUser,
@@ -70,30 +73,11 @@ const AgregarUsuario = () => {
     formState: { errors },
   } = useForm({
     mode: "onSubmit",
-    resolver: yupResolver(id ? UserEditValidator : UserValidator),
+    resolver: yupResolver(id ? UserEditValidator : UserInviteValidator),
   });
 
   const onSubmit = (data: FieldValues) => {
     setIsSubmitting(true);
-
-    const handleSettled = (promise: Promise<unknown>) =>
-      promise
-        .then(() => {
-          toast.success(
-            id
-              ? "Usuario actualizado correctamente"
-              : "Usuario agregado correctamente"
-          );
-          router.push("/users");
-        })
-        .catch(() => {
-          toast.error(
-            id
-              ? "Error al actualizar el usuario"
-              : "Error al agregar el usuario"
-          );
-        })
-        .finally(() => setIsSubmitting(false));
 
     if (id) {
       const input: Partial<UserInput> = {
@@ -101,15 +85,28 @@ const AgregarUsuario = () => {
         email: data.email,
       };
       if (data.password) input.password = data.password;
-      handleSettled(dispatch(updateUser({ id, input })).unwrap());
-    } else {
-      const input: UserInput = {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-      };
-      handleSettled(dispatch(createUser(input)).unwrap());
+
+      dispatch(updateUser({ id, input }))
+        .unwrap()
+        .then(() => {
+          toast.success("Usuario actualizado correctamente");
+          router.push("/users");
+        })
+        .catch(() => toast.error("Error al actualizar el usuario"))
+        .finally(() => setIsSubmitting(false));
+      return;
     }
+
+    dispatch(inviteUser({ name: data.name, email: data.email }))
+      .unwrap()
+      .then(() => {
+        toast.success("Se envió un correo de invitación al usuario");
+        router.push("/users");
+      })
+      .catch((error) => {
+        toast.error(error?.message || "Error al invitar al usuario");
+      })
+      .finally(() => setIsSubmitting(false));
   };
 
   const handleReset = () => {
@@ -144,7 +141,9 @@ const AgregarUsuario = () => {
         {id ? "Editar Usuario" : "Agregar Usuario"}
       </h2>
       <p className="mb-8 text-sm text-gray-500">
-        Completa la información del usuario.
+        {id
+          ? "Completa la información del usuario."
+          : "Se le enviará un correo con un enlace para que defina su propia contraseña e ingrese al sistema."}
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
@@ -160,18 +159,23 @@ const AgregarUsuario = () => {
           placeholder="correo@ejemplo.com"
           registration={register("email")}
           error={errors?.email?.message}
-        />
-
-        <FormField
-          label="Contraseña"
-          placeholder="••••••••"
-          type="password"
-          registration={register("password")}
-          error={errors?.password?.message}
           hint={
-            id ? "Deja este campo en blanco para no cambiarla" : undefined
+            id
+              ? undefined
+              : "Recibirá un correo con un enlace para crear su contraseña"
           }
         />
+
+        {id && (
+          <FormField
+            label="Contraseña"
+            placeholder="••••••••"
+            type="password"
+            registration={register("password")}
+            error={errors?.password?.message}
+            hint="Deja este campo en blanco para no cambiarla"
+          />
+        )}
 
         <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
           <button
@@ -189,7 +193,7 @@ const AgregarUsuario = () => {
             {isSubmitting && (
               <AiOutlineLoading3Quarters className="animate-spin" size={18} />
             )}
-            {id ? "Actualizar" : "Agregar"}
+            {id ? "Actualizar" : "Enviar invitación"}
           </button>
         </div>
       </form>

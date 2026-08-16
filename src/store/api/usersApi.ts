@@ -1,4 +1,4 @@
-import { PublicUser, UserInput } from "@/types";
+import { PublicUser, UserInput, UserInviteInput } from "@/types";
 import { requestJson } from "./httpClient";
 
 const USERS_ENDPOINT = "/api/users";
@@ -6,8 +6,8 @@ const USERS_ENDPOINT = "/api/users";
 export const fetchUsersRequest = () =>
   requestJson<PublicUser[]>(USERS_ENDPOINT);
 
-export const createUserRequest = (input: UserInput) =>
-  requestJson<PublicUser>(USERS_ENDPOINT, {
+export const inviteUserRequest = (input: UserInviteInput) =>
+  requestJson<null>(USERS_ENDPOINT, {
     method: "POST",
     body: JSON.stringify(input),
   });
