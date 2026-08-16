@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminAuth } from "@/services/firebase/admin";
+import { recordUserLogin } from "@/services/firebase/users.service";
 import {
   SESSION_COOKIE_NAME,
   SESSION_MAX_AGE_SECONDS,
@@ -15,9 +16,13 @@ export async function POST(request: Request) {
       );
     }
 
+    const decodedToken = await getAdminAuth().verifyIdToken(idToken);
+
     const sessionCookie = await getAdminAuth().createSessionCookie(idToken, {
       expiresIn: SESSION_MAX_AGE_SECONDS * 1000,
     });
+
+    await recordUserLogin(decodedToken.uid).catch(() => {});
 
     const response = NextResponse.json({ message: "Sesión iniciada" });
     response.cookies.set(SESSION_COOKIE_NAME, sessionCookie, {

@@ -20,6 +20,7 @@ const toPublicUser = (
   id,
   name: data.name,
   email: data.email,
+  lastLogin: data.lastLogin,
 });
 
 export const getUsers = async (): Promise<PublicUser[]> => {
@@ -115,6 +116,12 @@ export const updateUser = async (
   if (Object.keys(profileUpdate).length > 0) {
     await usersCollection().doc(id).set(profileUpdate, { merge: true });
   }
+};
+
+export const recordUserLogin = async (id: string): Promise<void> => {
+  await usersCollection()
+    .doc(id)
+    .set({ lastLogin: new Date().toISOString() }, { merge: true });
 };
 
 export const PROTECTED_USER_ERROR = "Este usuario no se puede eliminar";

@@ -4,6 +4,7 @@ export interface User {
   id: FirestoreId;
   name: string;
   email: string;
+  lastLogin?: string;
 }
 
 export type UserInput = Omit<User, "id"> & { password: string };

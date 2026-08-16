@@ -1,4 +1,5 @@
 import { PublicUser } from "@/types";
+import { formatDateTime } from "@/utils/Utils";
 import React from "react";
 
 interface CardUserProps {
@@ -25,6 +26,11 @@ const CardUser = ({ user, actions }: CardUserProps) => {
         <div className="min-w-0">
           <p className="truncate font-bold text-gray-800">{user.name}</p>
           <p className="truncate text-sm text-gray-500">{user.email}</p>
+          <p className="truncate text-xs text-gray-400">
+            {user.lastLogin
+              ? `Último acceso: ${formatDateTime(user.lastLogin)}`
+              : "Aún no ha iniciado sesión"}
+          </p>
         </div>
       </div>
 

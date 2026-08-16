@@ -25,6 +25,17 @@ export const parseDate = (dateString: string): Date => {
 
 export const getFecha = () => formatDate(new Date());
 
+export const formatDateTime = (isoString: string): string => {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return isoString;
+
+  const time = date.toLocaleTimeString("es-ES", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return `${formatDate(date)} ${time}`;
+};
+
 export const convertToBase64 = (file: File) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
