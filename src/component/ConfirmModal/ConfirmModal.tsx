@@ -1,7 +1,6 @@
 "use client";
 
 import { ReactNode } from "react";
-import { IoClose } from "react-icons/io5";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 interface ConfirmModalProps {
@@ -36,27 +35,13 @@ const ConfirmModal = ({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/40 p-4 animate-fade-up">
-      <div className="w-full max-w-sm rounded-xl bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-          <h2 className="text-lg font-bold text-gray-800">{title}</h2>
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isLoading}
-            aria-label="Cerrar"
-            className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <IoClose size={22} />
-          </button>
-        </div>
-
+      <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+        <h2 className="text-xl font-bold text-gray-800">{title}</h2>
         {description && (
-          <div className="px-5 py-4">
-            <p className="text-sm text-gray-600">{description}</p>
-          </div>
+          <p className="mt-2 text-sm text-gray-600">{description}</p>
         )}
 
-        <div className="flex flex-col-reverse gap-3 px-5 pb-5 pt-2 sm:flex-row sm:justify-end">
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button
             type="button"
             onClick={onCancel}
