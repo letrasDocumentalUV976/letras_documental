@@ -4,7 +4,7 @@ import { SESSION_COOKIE_NAME } from "@/constants/session";
 
 const PUBLIC_PREFIXES = ["/login", "/library", "/videos", "/activar-cuenta"];
 
-export default function middleware(req: NextRequest) {
+export default function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isPublicRoute = PUBLIC_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
