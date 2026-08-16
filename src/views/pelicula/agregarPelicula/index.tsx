@@ -92,7 +92,7 @@ const AgregarPelicula = () => {
             ? "Pelicula actualizada correctamente"
             : "Pelicula agregada correctamente"
         );
-        router.push("/pelicula");
+        router.push("/movies");
       })
       .catch(() => {
         toast.error(

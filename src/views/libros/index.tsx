@@ -54,7 +54,7 @@ const Index = () => {
     <>
       <div className="flex flex-row justify-between items-center p-5">
         <h2 className="text-2xl font-bold">Libros</h2>
-        <LinkButton href="/libros/agregar" text="Agregar Libro" />
+        <LinkButton href="/books/add" text="Agregar Libro" />
       </div>
 
       {books.length > 0 ? (
@@ -68,7 +68,7 @@ const Index = () => {
                   className="cursor-pointer"
                   color={!librosSeleccionados ? "gray" : "black"}
                   onClick={() =>
-                    router.push(`/libros/editar/${librosSeleccionados?.id}`)
+                    router.push(`/books/edit/${librosSeleccionados?.id}`)
                   }
                 />
                 <MdDelete

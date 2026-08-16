@@ -44,34 +44,34 @@ const Header = () => {
 
         <ul className="text-white">
           <li className="p-4 text-lg font-bold text-center">
-            <Link onClick={desactiveMenu} href={"/inicio"}>
+            <Link onClick={desactiveMenu} href={"/"}>
               Inicio
             </Link>
           </li>
 
           <li className="p-4 text-lg font-bold text-center">
-            <Link onClick={desactiveMenu} href={"/biblioteca"}>
+            <Link onClick={desactiveMenu} href={"/library"}>
               Biblioteca
             </Link>
           </li>
           <li className="p-4 text-lg font-bold text-center">
-            <Link onClick={desactiveMenu} href={"/videoteca"}>
+            <Link onClick={desactiveMenu} href={"/videos"}>
               Videoteca
             </Link>
           </li>
 
           <li className="p-4 text-lg font-bold text-center">
-            <Link onClick={desactiveMenu} href={"/libros"}>
+            <Link onClick={desactiveMenu} href={"/books"}>
               Libros
             </Link>
           </li>
           <li className="p-4 text-lg font-bold text-center">
-            <Link onClick={desactiveMenu} href={"/pelicula"}>
+            <Link onClick={desactiveMenu} href={"/movies"}>
               Película
             </Link>
           </li>
           <li className="p-4 text-lg font-bold text-center">
-            <Link onClick={desactiveMenu} href={"/usuario"}>
+            <Link onClick={desactiveMenu} href={"/users"}>
               Usuarios
             </Link>
           </li>
@@ -90,24 +90,24 @@ const Header = () => {
         <nav className="hidden lg:flex text-white">
           <ul className="flex flex-row">
             <li className="p-4 text-lg font-bold text-center">
-              <Link href={"/inicio"}>Inicio</Link>
+              <Link href={"/"}>Inicio</Link>
             </li>
 
             <li className="p-4 text-lg font-bold text-center">
-              <Link href={"/biblioteca"}>Biblioteca</Link>
+              <Link href={"/library"}>Biblioteca</Link>
             </li>
             <li className="p-4 text-lg font-bold text-center">
-              <Link href={"/videoteca"}>Videoteca</Link>
+              <Link href={"/videos"}>Videoteca</Link>
             </li>
 
             <li className="p-4 text-lg font-bold text-center">
-              <Link href={"/libros"}>Libros</Link>
+              <Link href={"/books"}>Libros</Link>
             </li>
             <li className="p-4 text-lg font-bold text-center">
-              <Link href={"/pelicula"}>Película</Link>
+              <Link href={"/movies"}>Película</Link>
             </li>
             <li className="p-4 text-lg font-bold text-center">
-              <Link href={"/usuario"}>Usuarios</Link>
+              <Link href={"/users"}>Usuarios</Link>
             </li>
           </ul>
         </nav>

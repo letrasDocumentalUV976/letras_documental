@@ -19,7 +19,7 @@ const CardBook = ({
 
   return (
     <Link
-      href={`/biblioteca/${id}`}
+      href={`/library/${id}`}
       className="w-[350px] h-[200px] rounded-md shadow-md flex flex-row justify-center items-center gap-2 cursor-pointer"
     >
       <div className="w-[40%] h-[200px] bg-primary/50 rounded-md">

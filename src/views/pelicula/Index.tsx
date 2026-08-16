@@ -52,7 +52,7 @@ const Index = () => {
     <>
       <div className="flex flex-row justify-between items-center p-5">
         <h2 className="text-2xl font-bold">Peliculas</h2>
-        <LinkButton href="/pelicula/agregar" text="Agregar Pelicula" />
+        <LinkButton href="/movies/add" text="Agregar Pelicula" />
       </div>
 
       {movies.length > 0 ? (
@@ -67,7 +67,7 @@ const Index = () => {
                   color={!peliculasSeleccionadas ? "gray" : "black"}
                   onClick={() =>
                     router.push(
-                      `/pelicula/editar/${
+                      `/movies/edit/${
                         peliculasSeleccionadas?.id || "jhooasdas"
                       }`
                     )

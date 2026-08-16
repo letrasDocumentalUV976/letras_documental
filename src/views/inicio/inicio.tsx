@@ -1,6 +1,6 @@
 "use client";
 
-import { getFecha } from "../../../app/utils/Utils";
+import { getFecha } from "@/utils/Utils";
 import ModalPrestamo from "@/views/prestamo";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";

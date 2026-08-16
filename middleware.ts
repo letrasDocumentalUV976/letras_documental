@@ -4,16 +4,10 @@ import type { NextRequest } from "next/server";
 export default async function middleware(req: NextRequest) {
   const currentPath = req.nextUrl.pathname;
 
-  const publicRoutes = ["/biblioteca", "/videoteca", "/biblioteca/:id"];
+  const publicRoutes = ["/library", "/videos", "/library/:id"];
 
   if (publicRoutes.some((val) => currentPath.includes(val))) {
     return NextResponse.next();
-  }
-
-  if (req.nextUrl.pathname === "/") {
-    const url = req.nextUrl.clone();
-    url.pathname = "/inicio";
-    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();

@@ -53,7 +53,7 @@ const Index = () => {
     <>
       <div className="flex flex-row justify-between items-center p-5">
         <h2 className="text-2xl font-bold">Usuarios</h2>
-        <LinkButton href="/usuario/agregar" text="Agregar Pelicula" />
+        <LinkButton href="/users/add" text="Agregar Pelicula" />
       </div>
 
       {usuarios.length > 0 ? (
@@ -68,7 +68,7 @@ const Index = () => {
                   color={!usuarioSeleccionado ? "gray" : "black"}
                   onClick={() =>
                     router.push(
-                      `/usuario/editar/${
+                      `/users/edit/${
                         usuarioSeleccionado?.id || "jhooasdas"
                       }`
                     )

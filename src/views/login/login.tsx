@@ -21,7 +21,7 @@ const Login = () => {
         localStorage.setItem("autenticado", "true");
         localStorage.setItem("user", JSON.stringify(user));
         toast.success("Usuario autenticado correctamente");
-        router.push("/inicio");
+        router.push("/");
       })
       .catch(() => {
         toast.error("Error al autenticar el usuario");

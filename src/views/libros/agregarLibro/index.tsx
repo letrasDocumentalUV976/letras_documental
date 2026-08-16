@@ -104,7 +104,7 @@ const AgregarTexto = () => {
         toast.success(
           id ? "Libro actualizado correctamente" : "Libro agregado correctamente"
         );
-        router.push("/libros");
+        router.push("/books");
       })
       .catch(() => {
         toast.error(

@@ -51,7 +51,7 @@ const AgregarUsuario = () => {
     result
       .then(() => {
         toast.success(id ? "¡Usuario actualizado!" : "¡Usuario agregado!");
-        router.push("/usuario");
+        router.push("/users");
       })
       .catch(() => {
         toast.error("Error al guardar los datos.");
