@@ -29,8 +29,8 @@ const Index = () => {
   const [returningId, setReturningId] = useState<string | null>(null);
 
   useEffect(() => {
-    dispatch(fetchLoans());
-  }, [dispatch]);
+    if (loansStatus === "idle") dispatch(fetchLoans());
+  }, [dispatch, loansStatus]);
 
   const confirmEntregar = () => {
     if (!pendingReturn) return;
