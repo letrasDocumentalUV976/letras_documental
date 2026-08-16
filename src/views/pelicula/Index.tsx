@@ -19,6 +19,7 @@ import toast from "react-hot-toast";
 import { MdModeEditOutline, MdDelete } from "react-icons/md";
 import Loading from "@/component/Loader/Loader";
 import Empty from "@/component/Empty/Empty";
+import ConfirmModal from "@/component/ConfirmModal/ConfirmModal";
 
 const Index = () => {
   const dispatch = useV1Dispatch();
@@ -27,6 +28,7 @@ const Index = () => {
   const router = useRouter();
   const { register, watch, setValue } = useForm();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Movie | null>(null);
 
   useEffect(() => {
     setValue("search", "");
@@ -38,14 +40,9 @@ const Index = () => {
     movie.title?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleDelete = (movie: Movie) => {
-    if (deletingId) return;
-    if (
-      !window.confirm(
-        `¿Eliminar "${movie.title}"? Esta acción no se puede deshacer.`
-      )
-    )
-      return;
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
+    const movie = pendingDelete;
 
     setDeletingId(movie.id);
     dispatch(deleteMovie(movie.id))
@@ -56,7 +53,10 @@ const Index = () => {
       .catch(() => {
         toast.error("Error al eliminar la película");
       })
-      .finally(() => setDeletingId(null));
+      .finally(() => {
+        setDeletingId(null);
+        setPendingDelete(null);
+      });
   };
 
   if (moviesStatus === "loading" || moviesStatus === "idle")
@@ -97,7 +97,7 @@ const Index = () => {
                     <MdModeEditOutline size={20} />
                   </button>
                   <button
-                    onClick={() => handleDelete(movie)}
+                    onClick={() => setPendingDelete(movie)}
                     disabled={deletingId === movie.id}
                     aria-label={`Eliminar ${movie.title}`}
                     className="rounded-md p-2 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
@@ -112,6 +112,17 @@ const Index = () => {
       ) : (
         <Empty />
       )}
+
+      <ConfirmModal
+        open={!!pendingDelete}
+        title="Eliminar película"
+        description={`¿Eliminar "${pendingDelete?.title}"? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        variant="danger"
+        isLoading={!!deletingId}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 };

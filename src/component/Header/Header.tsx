@@ -11,6 +11,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { selectSessionUser, useV1Selector } from "@/store";
 import { signOutUser } from "@/services/firebase/auth.service";
+import ConfirmModal from "@/component/ConfirmModal/ConfirmModal";
 
 type NavLink = {
   href: string;
@@ -32,6 +33,7 @@ const privateLinks: NavLink[] = [
 
 const Header = () => {
   const [active, setActive] = useState(false);
+  const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
   const pathname = usePathname();
   const sessionUser = useV1Selector(selectSessionUser);
   const isLogged = Boolean(sessionUser);
@@ -40,8 +42,13 @@ const Header = () => {
     setActive(!active);
   };
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
+    setConfirmLogoutOpen(true);
+  };
+
+  const confirmLogout = () => {
     signOutUser();
+    setConfirmLogoutOpen(false);
   };
 
   const desactiveMenu = () => {
@@ -96,7 +103,7 @@ const Header = () => {
             )}
             {isLogged && (
               <button
-                onClick={handleLogout}
+                onClick={handleLogoutClick}
                 aria-label="Cerrar sesión"
                 className="hidden items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 sm:flex"
               >
@@ -177,7 +184,7 @@ const Header = () => {
               <button
                 onClick={() => {
                   desactiveMenu();
-                  handleLogout();
+                  handleLogoutClick();
                 }}
                 className="flex w-full items-center gap-2 rounded-md px-3 py-3 text-base font-medium text-white transition-colors hover:bg-white/10"
               >
@@ -188,6 +195,16 @@ const Header = () => {
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        open={confirmLogoutOpen}
+        title="Cerrar sesión"
+        description="¿Estás seguro de que deseas cerrar sesión?"
+        confirmText="Cerrar sesión"
+        variant="danger"
+        onConfirm={confirmLogout}
+        onCancel={() => setConfirmLogoutOpen(false)}
+      />
     </>
   );
 };

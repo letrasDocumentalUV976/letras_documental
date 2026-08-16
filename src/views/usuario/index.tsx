@@ -19,6 +19,7 @@ import toast from "react-hot-toast";
 import { MdModeEditOutline, MdDelete } from "react-icons/md";
 import Loading from "@/component/Loader/Loader";
 import Empty from "@/component/Empty/Empty";
+import ConfirmModal from "@/component/ConfirmModal/ConfirmModal";
 
 const Index = () => {
   const dispatch = useV1Dispatch();
@@ -27,6 +28,7 @@ const Index = () => {
   const router = useRouter();
   const { register, watch, setValue } = useForm();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<PublicUser | null>(null);
 
   useEffect(() => {
     setValue("search", "");
@@ -40,14 +42,9 @@ const Index = () => {
       user.email?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleDelete = (user: PublicUser) => {
-    if (deletingId) return;
-    if (
-      !window.confirm(
-        `¿Eliminar a "${user.name}"? Esta acción no se puede deshacer.`
-      )
-    )
-      return;
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
+    const user = pendingDelete;
 
     setDeletingId(user.id);
     dispatch(deleteUser(user.id))
@@ -58,7 +55,10 @@ const Index = () => {
       .catch(() => {
         toast.error("Error al eliminar el usuario");
       })
-      .finally(() => setDeletingId(null));
+      .finally(() => {
+        setDeletingId(null);
+        setPendingDelete(null);
+      });
   };
 
   if (usersStatus === "loading" || usersStatus === "idle") return <Loading />;
@@ -98,7 +98,7 @@ const Index = () => {
                     <MdModeEditOutline size={20} />
                   </button>
                   <button
-                    onClick={() => handleDelete(user)}
+                    onClick={() => setPendingDelete(user)}
                     disabled={deletingId === user.id}
                     aria-label={`Eliminar ${user.name}`}
                     className="rounded-md p-2 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
@@ -113,6 +113,17 @@ const Index = () => {
       ) : (
         <Empty />
       )}
+
+      <ConfirmModal
+        open={!!pendingDelete}
+        title="Eliminar usuario"
+        description={`¿Eliminar a "${pendingDelete?.name}"? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        variant="danger"
+        isLoading={!!deletingId}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 };
