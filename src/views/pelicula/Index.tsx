@@ -1,6 +1,8 @@
 "use client";
 
+import CardMovie from "@/component/CardMovie";
 import LinkButton from "@/component/LinkButton/LinkButton";
+import TextField from "@/component/TextField/TextField";
 import { Movie } from "@/types";
 import {
   deleteMovie,
@@ -10,12 +12,11 @@ import {
   useV1Dispatch,
   useV1Selector,
 } from "@/store";
-import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { MdModeEditOutline } from "react-icons/md";
-import { MdDelete } from "react-icons/md";
+import { MdModeEditOutline, MdDelete } from "react-icons/md";
 import Loading from "@/component/Loader/Loader";
 import Empty from "@/component/Empty/Empty";
 
@@ -24,115 +25,94 @@ const Index = () => {
   const movies = useV1Selector(selectMovies);
   const moviesStatus = useV1Selector(selectMoviesStatus);
   const router = useRouter();
-  const [peliculasSeleccionadas, setPeliculasSeleccionadas] =
-    useState<Movie>();
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { register, watch, setValue } = useForm();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
+    setValue("search", "");
     dispatch(fetchMovies());
-  }, [dispatch]);
+  }, [dispatch, setValue]);
 
-  const handleDelete = async () => {
-    if (isDeleting || !peliculasSeleccionadas) return;
-    setIsDeleting(true);
-    dispatch(deleteMovie(peliculasSeleccionadas.id))
+  const search = watch("search") || "";
+  const filteredMovies = movies.filter((movie: Movie) =>
+    movie.title?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleDelete = (movie: Movie) => {
+    if (deletingId) return;
+    if (
+      !window.confirm(
+        `¿Eliminar "${movie.title}"? Esta acción no se puede deshacer.`
+      )
+    )
+      return;
+
+    setDeletingId(movie.id);
+    dispatch(deleteMovie(movie.id))
       .unwrap()
-      .catch(() => {
-        toast.error("Error al eliminar la pelicula");
+      .then(() => {
+        toast.success("Película eliminada correctamente");
       })
-      .finally(() => {
-        setPeliculasSeleccionadas(undefined);
-        setIsDeleting(false);
-      });
+      .catch(() => {
+        toast.error("Error al eliminar la película");
+      })
+      .finally(() => setDeletingId(null));
   };
 
-  if (moviesStatus === "loading" || moviesStatus === "idle") return <Loading />;
+  if (moviesStatus === "loading" || moviesStatus === "idle")
+    return <Loading />;
 
   return (
-    <>
-      <div className="flex flex-row justify-between items-center p-5">
-        <h2 className="text-2xl font-bold">Peliculas</h2>
-        <LinkButton href="/movies/add" text="Agregar Pelicula" />
+    <div className="mx-auto w-full max-w-7xl">
+      <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-2xl font-bold text-gray-800">Películas</h2>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="w-full sm:w-[220px] lg:w-[320px]">
+            <TextField
+              label="Búsqueda"
+              placeholder="Buscar por título..."
+              value={watch("search")}
+              type="text"
+              isLabel={false}
+              {...register("search")}
+            />
+          </div>
+          <LinkButton href="/movies/add" text="Agregar Película" />
+        </div>
       </div>
 
-      {movies.length > 0 ? (
-        <div className="grid grid-cols-2 p-5">
-          <div className="col-span-1">
-            <div className="flex flex-row justify-between items-center">
-              <p className="text-lg font-bold">Todas las peliculas</p>
-              <div className="flex flex-row justify-between items-center">
-                <MdModeEditOutline
-                  size={28}
-                  className="cursor-pointer"
-                  color={!peliculasSeleccionadas ? "gray" : "black"}
-                  onClick={() =>
-                    router.push(
-                      `/movies/edit/${
-                        peliculasSeleccionadas?.id || "jhooasdas"
-                      }`
-                    )
-                  }
-                />
-                <MdDelete
-                  size={28}
-                  className="cursor-pointer"
-                  color={!peliculasSeleccionadas ? "gray" : "black"}
-                  onClick={handleDelete}
-                />
-              </div>
-            </div>
-
-            <br />
-            <table className="table-auto border-collapse border border-gray-400 w-full max-h-[700px] overflow-auto">
-              <thead>
-                <tr>
-                  <th className="border border-gray-400 px-4 py-2">Titulo</th>
-                  <th className="border border-gray-400 px-4 py-2">Director</th>
-                  <th className="border border-gray-400 px-4 py-2">Año</th>
-                  <th className="border border-gray-400 px-4 py-2">Tipo</th>
-                  <th className="border border-gray-400 px-4 py-2">Duracion</th>
-                </tr>
-              </thead>
-              <tbody className="text-center">
-                {movies?.map((pelicula: Movie) => (
-                  <tr
-                    key={pelicula.id}
-                    onClick={() => setPeliculasSeleccionadas(pelicula)}
-                    className={clsx(
-                      "cursor-pointer",
-                      pelicula.id === peliculasSeleccionadas?.id &&
-                        "bg-primary/80 text-white"
-                    )}
+      {filteredMovies.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredMovies.map((movie: Movie) => (
+            <CardMovie
+              key={movie.id}
+              movie={movie}
+              actions={
+                <>
+                  <button
+                    onClick={() => router.push(`/movies/edit/${movie.id}`)}
+                    aria-label={`Editar ${movie.title}`}
+                    className="rounded-md p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary"
                   >
-                    <td className="border border-gray-400 px-4 py-2">
-                      {pelicula.title}
-                    </td>
-                    <td className="border border-gray-400 px-4 py-2">
-                      {pelicula.director}
-                    </td>
-                    <td className="border border-gray-400 px-4 py-2">
-                      {pelicula.publicationYear}
-                    </td>
-                    <td className="border border-gray-400 px-4 py-2">
-                      {pelicula.type}
-                    </td>
-                    <td className="border border-gray-400 px-4 py-2">
-                      {pelicula.duration}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="col-span-1">
-            <h2 className="text-2xl font-bold"></h2>
-          </div>
+                    <MdModeEditOutline size={20} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(movie)}
+                    disabled={deletingId === movie.id}
+                    aria-label={`Eliminar ${movie.title}`}
+                    className="rounded-md p-2 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <MdDelete size={20} />
+                  </button>
+                </>
+              }
+            />
+          ))}
         </div>
       ) : (
         <Empty />
       )}
-    </>
+    </div>
   );
 };
 

@@ -4,7 +4,7 @@ import EditarPelicula from "@/views/pelicula/agregarPelicula";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Editar Libro",
+  title: "Editar Película",
   description: "Sistema de administración de documental de letras españolas",
 };
 

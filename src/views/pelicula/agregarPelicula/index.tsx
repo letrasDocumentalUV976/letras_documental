@@ -3,16 +3,21 @@
 import { convertToBase64 } from "@/utils/Utils";
 import { MovieValidator } from "@/validator/MovieValidator";
 import React, { useEffect, useState } from "react";
-import { useForm, FieldValues } from "react-hook-form";
+import {
+  useForm,
+  FieldValues,
+  UseFormRegisterReturn,
+} from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import UploadImage from "@/component/UploadImage/UploadImage";
-import TextField from "@/component/TextField/TextField";
 import toast from "react-hot-toast";
+import Link from "next/link";
 import TextList from "@/component/TextList/TextList";
 import { useParams, useRouter } from "next/navigation";
 import { countries } from "@/utils/Countries";
 import { languages } from "@/utils/Languages";
-import { MovieCopyType, YesNo } from "@/types";
+import { IoArrowBack } from "react-icons/io5";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import {
   createMovie,
   fetchMovies,
@@ -23,11 +28,65 @@ import {
   useV1Selector,
 } from "@/store";
 
+const FormField = ({
+  label,
+  placeholder,
+  registration,
+  error,
+  type = "text",
+}: {
+  label: string;
+  placeholder?: string;
+  registration: UseFormRegisterReturn;
+  error?: string;
+  type?: string;
+}) => (
+  <div className="flex flex-col gap-1">
+    <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+      {label}
+    </label>
+    <input
+      type={type}
+      placeholder={placeholder}
+      className="w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-gray-800 outline-none transition-colors placeholder:text-gray-400 focus:border-primary"
+      {...registration}
+    />
+    {error && <p className="text-sm text-red-500">{error}</p>}
+  </div>
+);
+
+const SelectField = ({
+  label,
+  registration,
+  error,
+  children,
+}: {
+  label: string;
+  registration: UseFormRegisterReturn;
+  error?: string;
+  children: React.ReactNode;
+}) => (
+  <div className="flex flex-col gap-1">
+    <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+      {label}
+    </label>
+    <select
+      className="w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-gray-800 outline-none transition-colors focus:border-primary"
+      {...registration}
+    >
+      {children}
+    </select>
+    {error && <p className="text-sm text-red-500">{error}</p>}
+  </div>
+);
+
 const AgregarPelicula = () => {
   const dispatch = useV1Dispatch();
   const movies = useV1Selector(selectMovies);
   const moviesStatus = useV1Selector(selectMoviesStatus);
   const [image, setImage] = useState<string>("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const params = useParams();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -45,27 +104,37 @@ const AgregarPelicula = () => {
   });
 
   const handleUpload = async (file: File) => {
-    if (!file) return alert("Selecciona una imagen primero");
-    const formData = new FormData();
-    formData.append("file", file);
-    const base64 = await convertToBase64(file);
-    const response = await fetch("/api/cloudinary", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ file: base64 }),
-    });
-    const data = await response.json();
-    if (data.url) {
-      setValue("image", data.url);
-      setImage(data.url);
-    } else {
-      alert("Error al subir la imagen");
+    if (!file) {
+      toast.error("Selecciona una imagen primero");
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const base64 = await convertToBase64(file);
+      const response = await fetch("/api/cloudinary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ file: base64 }),
+      });
+      const data = await response.json();
+      if (data.url) {
+        setValue("image", data.url);
+        setImage(data.url);
+      } else {
+        toast.error("Error al subir la imagen");
+      }
+    } catch {
+      toast.error("Error al subir la imagen");
+    } finally {
+      setUploadingImage(false);
     }
   };
 
   const onSubmit = (data: FieldValues) => {
+    setIsSubmitting(true);
     const input = {
       title: data.title,
       director: data.director,
@@ -89,16 +158,35 @@ const AgregarPelicula = () => {
       .then(() => {
         toast.success(
           id
-            ? "Pelicula actualizada correctamente"
-            : "Pelicula agregada correctamente"
+            ? "Película actualizada correctamente"
+            : "Película agregada correctamente"
         );
         router.push("/movies");
       })
       .catch(() => {
         toast.error(
-          id ? "Error al actualizar la pelicula" : "Error al agregar la pelicula"
+          id
+            ? "Error al actualizar la película"
+            : "Error al agregar la película"
         );
-      });
+      })
+      .finally(() => setIsSubmitting(false));
+  };
+
+  const handleReset = () => {
+    reset({
+      title: "",
+      director: "",
+      publicationYear: "",
+      type: undefined,
+      duration: "",
+      genre: "",
+      country: "",
+      language: "",
+      subtitles: undefined,
+      image: "",
+    });
+    setImage("");
   };
 
   useEffect(() => {
@@ -117,161 +205,143 @@ const AgregarPelicula = () => {
   }, [id, movies, reset]);
 
   return (
-    <div className="grid grid-cols-3 p-5">
-      <div className="col-span-1 flex justify-center items-start">
-        <UploadImage
-          image={image}
-          handleImageCapture={handleUpload}
-          {...register("image")}
-        />
-      </div>
-      <div className="col-span-2">
-        <p className="text-2xl font-bold">Información de la pelicula</p>
-        <form className="flex flex-col justify-center items-center gap-5 py-5">
-          <TextField
-            label="Título"
-            errors={!!errors.title}
-            placeholder="Título"
-            value={watch("title")}
-            type={"text"}
-            isLabel={false}
-            message={errors?.title?.message}
-            {...register("title")}
+    <div className="mx-auto w-full max-w-5xl p-5">
+      <Link
+        href="/movies"
+        className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-gray-500 transition-colors hover:text-primary"
+      >
+        <IoArrowBack size={16} />
+        Volver a Películas
+      </Link>
+
+      <h2 className="mt-4 text-2xl font-bold text-gray-800">
+        {id ? "Editar Película" : "Agregar Película"}
+      </h2>
+      <p className="mb-8 text-sm text-gray-500">
+        Completa la información de la película.
+      </p>
+
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-col gap-8 lg:flex-row lg:items-start"
+      >
+        <div className="flex flex-col items-center gap-2 lg:w-[300px] lg:shrink-0">
+          <UploadImage
+            image={image}
+            handleImageCapture={handleUpload}
+            {...register("image")}
           />
-
-          <TextField
-            label="Director"
-            errors={!!errors.director}
-            placeholder="Director"
-            value={watch("director")}
-            type={"text"}
-            isLabel={false}
-            message={errors?.director?.message}
-            {...register("director")}
-          />
-
-          <div className="flex flex-row justify-between items-center gap-5 w-full">
-            <TextField
-              label="Año de Publicación"
-              errors={!!errors.publicationYear}
-              placeholder="Año de Publicación"
-              value={watch("publicationYear")}
-              type={"text"}
-              isLabel={false}
-              message={errors?.publicationYear?.message}
-              {...register("publicationYear")}
-            />
-
-            <div className="w-full border border-gray-400 rounded-md p-1 relative">
-              <select
-                name=""
-                id=""
-                value={watch("type")}
-                className="border-transparent w-full h-full p-2 outline-none"
-                onChange={(e) =>
-                  setValue("type", e.target.value as MovieCopyType)
-                }
-              >
-                <option value="">Seleccionar</option>
-                <option value="original">Original</option>
-                <option value="copy">Copia</option>
-                <option value="bluray">Blue Ray</option>
-              </select>
-              {!!errors.type && (
-                <p className="text-red-500">{errors.type.message}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-row justify-between items-center gap-5 w-full">
-            <TextField
-              label="Duración"
-              errors={!!errors.duration}
-              placeholder="Duración"
-              value={watch("duration")}
-              type={"text"}
-              isLabel={false}
-              message={errors?.duration?.message}
-              {...register("duration")}
-            />
-
-            <TextField
-              label="Género"
-              errors={!!errors.genre}
-              placeholder="Género"
-              value={watch("genre")}
-              type={"text"}
-              isLabel={false}
-              message={errors?.genre?.message}
-              {...register("genre")}
-            />
-          </div>
-
-          <TextList
-            register={register("country")}
-            options={countries}
-            placeholder="Pais"
-            errors={!!errors.country}
-            message={errors?.country?.message}
-          />
-
-          <div className="flex flex-row justify-between items-center gap-5 w-full">
-            <div className="w-full">
-              <TextList
-                register={register("language")}
-                options={languages}
-                placeholder="Idioma"
-                errors={!!errors.language}
-                message={errors?.language?.message}
-              />
-            </div>
-
-            <div className="w-full border border-gray-400 rounded-md p-1 relative">
-              <select
-                name=""
-                id=""
-                value={watch("subtitles")}
-                className="border-transparent w-full h-full p-2 outline-none"
-                onChange={(e) =>
-                  setValue("subtitles", e.target.value as YesNo)
-                }
-              >
-                <option value="">Seleccionar</option>
-                <option value="yes">Si</option>
-                <option value="no">No</option>
-              </select>
-              {!!errors.subtitles && (
-                <p className="text-red-500">{errors.subtitles.message}</p>
-              )}
-            </div>
-          </div>
-        </form>
-        <div className="flex flex-row justify-end items-center gap-5 w-full">
-          <button
-            onClick={() =>
-              reset({
-                title: "",
-                director: "",
-                publicationYear: "",
-                duration: "",
-                genre: "",
-                country: "",
-                language: "",
-                image: "",
-              })
-            }
-            className="bg-white text-primary p-2 rounded-md w-1/4 border-primary border-2"
-          >
-            Limpiar
-          </button>
-          <button
-            className="bg-primary text-white p-2 rounded-md w-1/4"
-            onClick={handleSubmit(onSubmit)}
-          >
-            {id ? "Actualizar" : "Agregar"}
-          </button>
+          {uploadingImage && (
+            <p className="flex items-center gap-2 text-sm text-gray-500">
+              <AiOutlineLoading3Quarters className="animate-spin" size={14} />
+              Subiendo imagen...
+            </p>
+          )}
         </div>
-      </div>
+
+        <div className="flex w-full flex-col gap-8">
+          <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
+            <FormField
+              label="Título"
+              placeholder="Título"
+              registration={register("title")}
+              error={errors?.title?.message}
+            />
+
+            <FormField
+              label="Director"
+              placeholder="Director"
+              registration={register("director")}
+              error={errors?.director?.message}
+            />
+
+            <FormField
+              label="Año de Publicación"
+              placeholder="Año de Publicación"
+              registration={register("publicationYear")}
+              error={errors?.publicationYear?.message}
+            />
+
+            <SelectField
+              label="Tipo"
+              registration={register("type")}
+              error={errors?.type?.message}
+            >
+              <option value="">Seleccionar</option>
+              <option value="original">Original</option>
+              <option value="copy">Copia</option>
+              <option value="bluray">Blu-ray</option>
+            </SelectField>
+
+            <FormField
+              label="Duración"
+              placeholder="Duración"
+              registration={register("duration")}
+              error={errors?.duration?.message}
+            />
+
+            <FormField
+              label="Género"
+              placeholder="Género"
+              registration={register("genre")}
+              error={errors?.genre?.message}
+            />
+
+            <TextList
+              label="País"
+              register={register("country")}
+              options={countries}
+              placeholder="País"
+              errors={!!errors.country}
+              message={errors?.country?.message}
+              defaultValue={watch("country")}
+            />
+
+            <TextList
+              label="Idioma"
+              register={register("language")}
+              options={languages}
+              placeholder="Idioma"
+              errors={!!errors.language}
+              message={errors?.language?.message}
+              defaultValue={watch("language")}
+            />
+
+            <SelectField
+              label="Subtítulos"
+              registration={register("subtitles")}
+              error={errors?.subtitles?.message}
+            >
+              <option value="">Seleccionar</option>
+              <option value="yes">Sí</option>
+              <option value="no">No</option>
+            </SelectField>
+          </div>
+
+          <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={handleReset}
+              className="rounded-md border-2 border-primary p-2 font-medium text-primary transition-colors hover:bg-primary/5 sm:w-1/4"
+            >
+              Limpiar
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex items-center justify-center gap-2 rounded-md bg-primary p-2 font-medium text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70 sm:w-1/4"
+            >
+              {isSubmitting && (
+                <AiOutlineLoading3Quarters
+                  className="animate-spin"
+                  size={18}
+                />
+              )}
+              {id ? "Actualizar" : "Agregar"}
+            </button>
+          </div>
+        </div>
+      </form>
     </div>
   );
 };

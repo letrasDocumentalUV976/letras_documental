@@ -4,7 +4,7 @@ import Index from "@/views/pelicula/agregarPelicula/index";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Agregar Libro",
+  title: "Agregar Película",
   description: "Sistema de administración de documental de letras españolas",
 };
 
