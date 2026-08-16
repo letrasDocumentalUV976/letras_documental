@@ -8,9 +8,28 @@ import {
 import { PublicUser } from "@/types";
 import { auth } from "./app";
 
-const toPublicUser = (user: FirebaseUser): PublicUser => ({
+const resolveUserName = async (user: FirebaseUser): Promise<string> => {
+  if (user.displayName) return user.displayName;
+  if (!user.email) return "Usuario";
+
+  try {
+    const response = await fetch(
+      `/api/users?email=${encodeURIComponent(user.email)}`
+    );
+    if (response.ok) {
+      const { data } = await response.json();
+      if (data?.name) return data.name;
+    }
+  } catch {
+    // Se ignora y se usa el correo como respaldo
+  }
+
+  return user.email;
+};
+
+const toPublicUser = async (user: FirebaseUser): Promise<PublicUser> => ({
   id: user.uid,
-  name: user.displayName ?? user.email ?? "Usuario",
+  name: await resolveUserName(user),
   email: user.email ?? "",
 });
 
@@ -42,4 +61,7 @@ export const signOutUser = () => signOut(auth);
 
 export const subscribeToAuthChanges = (
   callback: (user: PublicUser | null) => void
-) => onAuthStateChanged(auth, (user) => callback(user ? toPublicUser(user) : null));
+) =>
+  onAuthStateChanged(auth, async (user) => {
+    callback(user ? await toPublicUser(user) : null);
+  });

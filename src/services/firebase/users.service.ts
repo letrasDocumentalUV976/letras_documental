@@ -27,6 +27,18 @@ export const getUserById = async (id: string): Promise<PublicUser | null> => {
   return toPublicUser(document.id, document.data()!);
 };
 
+export const getUserByEmail = async (
+  email: string
+): Promise<PublicUser | null> => {
+  const snapshot = await usersCollection()
+    .where("email", "==", email)
+    .limit(1)
+    .get();
+  if (snapshot.empty) return null;
+  const document = snapshot.docs[0];
+  return toPublicUser(document.id, document.data());
+};
+
 export const createUser = async (input: UserInput): Promise<PublicUser> => {
   const userRecord = await getAdminAuth().createUser({
     email: input.email,
