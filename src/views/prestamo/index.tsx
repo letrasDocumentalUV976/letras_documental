@@ -13,6 +13,7 @@ import {
 import toast from "react-hot-toast";
 import { Book, Student } from "@/types";
 import Combobox from "@/component/Combobox/Combobox";
+import { formatDate } from "@/utils/Utils";
 import {
   createLoan,
   createStudent,
@@ -155,8 +156,8 @@ const Index = ({ closeModal, openModal }: Props) => {
         book: selectedBook,
         student: selectedStudent,
         status: "Loaned",
-        loanDate: loanDate.toLocaleDateString(),
-        returnDate: returnDate.toLocaleDateString(),
+        loanDate: formatDate(loanDate),
+        returnDate: formatDate(returnDate),
       })
     )
       .unwrap()
@@ -399,7 +400,7 @@ const Index = ({ closeModal, openModal }: Props) => {
                       Préstamo
                     </p>
                     <p className="text-sm text-gray-800">
-                      {loanDate.toLocaleDateString()}
+                      {formatDate(loanDate)}
                     </p>
                   </div>
                   <div>
@@ -407,7 +408,7 @@ const Index = ({ closeModal, openModal }: Props) => {
                       Devolución
                     </p>
                     <p className="text-sm text-gray-800">
-                      {returnDate.toLocaleDateString()}
+                      {formatDate(returnDate)}
                     </p>
                   </div>
                 </div>

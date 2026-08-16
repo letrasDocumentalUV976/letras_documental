@@ -1,4 +1,5 @@
 import { Loan } from "@/types";
+import { formatDateWithWeekday } from "@/utils/Utils";
 import Image from "next/image";
 import clsx from "clsx";
 import React from "react";
@@ -54,8 +55,8 @@ const CardLoan = ({ loan, isOverdue, actions }: CardLoanProps) => {
         </p>
 
         <div className="mt-2 flex flex-col gap-1 text-xs text-gray-500">
-          <span>Préstamo: {loan.loanDate}</span>
-          <span>Devolución: {loan.returnDate}</span>
+          <span>Préstamo: {formatDateWithWeekday(loan.loanDate)}</span>
+          <span>Devolución: {formatDateWithWeekday(loan.returnDate)}</span>
         </div>
       </div>
 
