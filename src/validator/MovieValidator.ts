@@ -18,5 +18,5 @@ export const MovieValidator = yup.object({
     .string()
     .oneOf(["yes", "no"])
     .required("Los subtitulos son requeridos"),
-  image: yup.string(),
+  image: yup.string().required("La imagen es requerida"),
 });

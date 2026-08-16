@@ -12,7 +12,7 @@ export const BookValidator = yup.object().shape({
   location: yup.object().shape({
     column: yup.number().optional(),
     row: yup.number().optional(),
-    shelf: yup.string().required(),
+    shelf: yup.string().oneOf(["1", "2"]).required(),
   }),
   type: yup.string().required("Debes ingresar un tipo de libro"),
   description: yup.string().required("Debes ingresar una descripción"),
