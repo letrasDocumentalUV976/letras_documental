@@ -15,13 +15,8 @@ export default function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
-  if (pathname === "/" && !hasSession) {
-    return NextResponse.redirect(new URL("/library", req.url));
-  }
-
   if (!isPublicRoute && !hasSession) {
-    const loginUrl = new URL("/login", req.url);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL("/library", req.url));
   }
 
   return NextResponse.next();

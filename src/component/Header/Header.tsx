@@ -9,7 +9,7 @@ import Logo from "../../../public/Logo.png";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { selectSessionUser, useV1Selector } from "@/store";
+import { logout, selectSessionUser, useV1Dispatch, useV1Selector } from "@/store";
 import { signOutUser } from "@/services/firebase/auth.service";
 import ConfirmModal from "@/component/ConfirmModal/ConfirmModal";
 
@@ -35,6 +35,7 @@ const Header = () => {
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const dispatch = useV1Dispatch();
   const sessionUser = useV1Selector(selectSessionUser);
   const isLogged = Boolean(sessionUser);
 
@@ -48,8 +49,9 @@ const Header = () => {
 
   const confirmLogout = () => {
     signOutUser().finally(() => {
+      dispatch(logout());
       setConfirmLogoutOpen(false);
-      router.push("/login");
+      router.push("/library");
     });
   };
 

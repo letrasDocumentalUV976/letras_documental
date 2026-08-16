@@ -1,7 +1,7 @@
 "use client";
 
 import Header from "@/component/Header/Header";
-import { setSessionUser, useV1Dispatch } from "@/store";
+import { logout, setSessionUser, useV1Dispatch } from "@/store";
 import { subscribeToAuthChanges } from "@/services/firebase/auth.service";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
@@ -18,6 +18,7 @@ const Index = ({ children }: IndexProps) => {
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user) => {
       dispatch(setSessionUser(user));
+      if (!user) dispatch(logout());
     });
     return unsubscribe;
   }, [dispatch]);
