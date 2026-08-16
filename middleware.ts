@@ -1,13 +1,27 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { SESSION_COOKIE_NAME } from "@/constants/session";
 
-export default async function middleware(req: NextRequest) {
-  const currentPath = req.nextUrl.pathname;
+const PUBLIC_PREFIXES = ["/login", "/library", "/videos", "/activar-cuenta"];
 
-  const publicRoutes = ["/library", "/videos", "/library/:id"];
+export default function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  const isPublicRoute = PUBLIC_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+  const hasSession = Boolean(req.cookies.get(SESSION_COOKIE_NAME)?.value);
 
-  if (publicRoutes.some((val) => currentPath.includes(val))) {
-    return NextResponse.next();
+  if (pathname === "/login" && hasSession) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
+
+  if (pathname === "/" && !hasSession) {
+    return NextResponse.redirect(new URL("/library", req.url));
+  }
+
+  if (!isPublicRoute && !hasSession) {
+    const loginUrl = new URL("/login", req.url);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();

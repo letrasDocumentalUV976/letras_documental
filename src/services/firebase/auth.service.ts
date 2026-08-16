@@ -54,10 +54,25 @@ export const signIn = async (
   password: string
 ): Promise<PublicUser> => {
   const credential = await signInWithEmailAndPassword(auth, email, password);
+  const idToken = await credential.user.getIdToken();
+
+  const response = await fetch("/api/auth/session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idToken }),
+  });
+  if (!response.ok) {
+    await signOut(auth);
+    throw new Error("No se pudo iniciar sesión");
+  }
+
   return toPublicUser(credential.user);
 };
 
-export const signOutUser = () => signOut(auth);
+export const signOutUser = async () => {
+  await signOut(auth);
+  await fetch("/api/auth/session", { method: "DELETE" }).catch(() => {});
+};
 
 export const subscribeToAuthChanges = (
   callback: (user: PublicUser | null) => void

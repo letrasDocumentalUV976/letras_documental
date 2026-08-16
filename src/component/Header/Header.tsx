@@ -8,7 +8,7 @@ import { IoClose } from "react-icons/io5";
 import Logo from "../../../public/Logo.png";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { selectSessionUser, useV1Selector } from "@/store";
 import { signOutUser } from "@/services/firebase/auth.service";
 import ConfirmModal from "@/component/ConfirmModal/ConfirmModal";
@@ -34,6 +34,7 @@ const Header = () => {
   const [active, setActive] = useState(false);
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const sessionUser = useV1Selector(selectSessionUser);
   const isLogged = Boolean(sessionUser);
 
@@ -46,8 +47,10 @@ const Header = () => {
   };
 
   const confirmLogout = () => {
-    signOutUser();
-    setConfirmLogoutOpen(false);
+    signOutUser().finally(() => {
+      setConfirmLogoutOpen(false);
+      router.push("/login");
+    });
   };
 
   const desactiveMenu = () => {
