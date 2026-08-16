@@ -1,6 +1,8 @@
 "use client";
 
+import CardUser from "@/component/CardUser";
 import LinkButton from "@/component/LinkButton/LinkButton";
+import TextField from "@/component/TextField/TextField";
 import { PublicUser } from "@/types";
 import {
   deleteUser,
@@ -10,118 +12,108 @@ import {
   useV1Dispatch,
   useV1Selector,
 } from "@/store";
-import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { MdModeEditOutline } from "react-icons/md";
-import { MdDelete } from "react-icons/md";
+import { MdModeEditOutline, MdDelete } from "react-icons/md";
 import Loading from "@/component/Loader/Loader";
 import Empty from "@/component/Empty/Empty";
 
 const Index = () => {
   const dispatch = useV1Dispatch();
-  const usuarios = useV1Selector(selectUsers);
+  const users = useV1Selector(selectUsers);
   const usersStatus = useV1Selector(selectUsersStatus);
   const router = useRouter();
-  const [usuarioSeleccionado, setUsuarioSeleccionado] =
-    useState<PublicUser | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { register, watch, setValue } = useForm();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
+    setValue("search", "");
     dispatch(fetchUsers());
-  }, [dispatch]);
+  }, [dispatch, setValue]);
 
-  const handleDelete = async () => {
-    if (isDeleting || !usuarioSeleccionado) return;
-    setIsDeleting(true);
-    dispatch(deleteUser(usuarioSeleccionado.id))
+  const search = watch("search") || "";
+  const filteredUsers = users.filter(
+    (user: PublicUser) =>
+      user.name?.toLowerCase().includes(search.toLowerCase()) ||
+      user.email?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleDelete = (user: PublicUser) => {
+    if (deletingId) return;
+    if (
+      !window.confirm(
+        `¿Eliminar a "${user.name}"? Esta acción no se puede deshacer.`
+      )
+    )
+      return;
+
+    setDeletingId(user.id);
+    dispatch(deleteUser(user.id))
       .unwrap()
       .then(() => {
         toast.success("Usuario eliminado correctamente");
-        setUsuarioSeleccionado(null);
       })
       .catch(() => {
         toast.error("Error al eliminar el usuario");
       })
-      .finally(() => setIsDeleting(false));
+      .finally(() => setDeletingId(null));
   };
 
   if (usersStatus === "loading" || usersStatus === "idle") return <Loading />;
 
   return (
-    <>
-      <div className="flex flex-row justify-between items-center p-5">
-        <h2 className="text-2xl font-bold">Usuarios</h2>
-        <LinkButton href="/users/add" text="Agregar Pelicula" />
+    <div className="mx-auto w-full max-w-7xl">
+      <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-2xl font-bold text-gray-800">Usuarios</h2>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="w-full sm:w-[220px] lg:w-[320px]">
+            <TextField
+              label="Búsqueda"
+              placeholder="Buscar por nombre o correo..."
+              value={watch("search")}
+              type="text"
+              isLabel={false}
+              {...register("search")}
+            />
+          </div>
+          <LinkButton href="/users/add" text="Agregar Usuario" />
+        </div>
       </div>
 
-      {usuarios.length > 0 ? (
-        <div className="grid grid-cols-2 p-5">
-          <div className="col-span-1">
-            <div className="flex flex-row justify-between items-center">
-              <p className="text-lg font-bold">Todas las peliculas</p>
-              <div className="flex flex-row justify-between items-center">
-                <MdModeEditOutline
-                  size={28}
-                  className="cursor-pointer"
-                  color={!usuarioSeleccionado ? "gray" : "black"}
-                  onClick={() =>
-                    router.push(
-                      `/users/edit/${
-                        usuarioSeleccionado?.id || "jhooasdas"
-                      }`
-                    )
-                  }
-                />
-                <MdDelete
-                  size={28}
-                  className="cursor-pointer"
-                  color={!usuarioSeleccionado ? "gray" : "black"}
-                  onClick={handleDelete}
-                />
-              </div>
-            </div>
-
-            <br />
-            <table className="table-auto border-collapse border border-gray-400 w-full">
-              <thead>
-                <tr>
-                  <th className="border border-gray-400 px-4 py-2">Nombre</th>
-                  <th className="border border-gray-400 px-4 py-2">Correo</th>
-                </tr>
-              </thead>
-              <tbody className="text-center">
-                {usuarios.map((usuario) => (
-                  <tr
-                    key={usuario.id}
-                    onClick={() => setUsuarioSeleccionado(usuario)}
-                    className={clsx(
-                      "cursor-pointer",
-                      usuario.id === usuarioSeleccionado?.id &&
-                        "bg-primary/80 text-white"
-                    )}
+      {filteredUsers.length > 0 ? (
+        <div className="flex flex-col gap-3 p-5">
+          {filteredUsers.map((user: PublicUser) => (
+            <CardUser
+              key={user.id}
+              user={user}
+              actions={
+                <>
+                  <button
+                    onClick={() => router.push(`/users/edit/${user.id}`)}
+                    aria-label={`Editar ${user.name}`}
+                    className="rounded-md p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary"
                   >
-                    <td className="border border-gray-400 px-4 py-2">
-                      {usuario.name}
-                    </td>
-                    <td className="border border-gray-400 px-4 py-2">
-                      {usuario.email}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="col-span-1">
-            <h2 className="text-2xl font-bold"></h2>
-          </div>
+                    <MdModeEditOutline size={20} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(user)}
+                    disabled={deletingId === user.id}
+                    aria-label={`Eliminar ${user.name}`}
+                    className="rounded-md p-2 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <MdDelete size={20} />
+                  </button>
+                </>
+              }
+            />
+          ))}
         </div>
       ) : (
         <Empty />
       )}
-    </>
+    </div>
   );
 };
 
