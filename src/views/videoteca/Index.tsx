@@ -1,51 +1,36 @@
 "use client";
 
 import TextField from "@/component/TextField/TextField";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import CardMovie from "@/component/CardMovie";
-import { IMovie } from "@/interfaces/interfacesBooks";
-import { connect } from "react-redux";
-import { setMovies } from "@/redux/movies";
-import { Dispatch } from "@reduxjs/toolkit";
-import { IGlobal } from "@/interfaces/globalState";
+import { Movie } from "@/types";
+import {
+  fetchMovies,
+  selectMovies,
+  selectMoviesStatus,
+  useV1Dispatch,
+  useV1Selector,
+} from "@/store";
 import Loading from "@/component/Loader/Loader";
 import Empty from "@/component/Empty/Empty";
 
-interface IIndexProps {
-  movies: IMovie[];
-  setPeliculas: (movies: IMovie[]) => void;
-}
-
-const Index = ({ movies: peliculas, setPeliculas }: IIndexProps) => {
+const Index = () => {
+  const dispatch = useV1Dispatch();
+  const peliculas = useV1Selector(selectMovies);
+  const moviesStatus = useV1Selector(selectMoviesStatus);
   const { register, watch, setValue } = useForm();
-  const [isLoading, setIsLoading] = useState(true);
 
-  const filterMovies = peliculas.filter((book) =>
-    book.titulo?.toLowerCase().includes(watch("search")?.toLowerCase())
+  const filterMovies = peliculas.filter((movie) =>
+    movie.title?.toLowerCase().includes(watch("search")?.toLowerCase())
   );
 
   useEffect(() => {
     setValue("search", "");
-    if (peliculas === undefined || peliculas.length < 1) {
-      fetch("/api/peliculas")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.status === 200) {
-            setPeliculas(data.data);
-          } else {
-            toast.error(data.message);
-          }
-          setIsLoading(false);
-        })
-        .catch((err) => console.log(err));
-    } else {
-      setIsLoading(false);
-    }
-  }, []);
+    dispatch(fetchMovies());
+  }, [dispatch, setValue]);
 
-  if (isLoading) {
+  if (moviesStatus === "loading" || moviesStatus === "idle") {
     return <Loading />;
   }
 
@@ -67,7 +52,7 @@ const Index = ({ movies: peliculas, setPeliculas }: IIndexProps) => {
       {filterMovies.length > 0 ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-5">
-            {filterMovies.map((pelicula: IMovie) => (
+            {filterMovies.map((pelicula: Movie) => (
               <CardMovie key={pelicula.id} {...pelicula} />
             ))}
           </div>
@@ -79,16 +64,4 @@ const Index = ({ movies: peliculas, setPeliculas }: IIndexProps) => {
   );
 };
 
-const mapStateToProps = (state: IGlobal) => {
-  return {
-    movies: state.movies.movies || [],
-  };
-};
-
-const mapDispatchToProps = (dispatch: Dispatch) => {
-  return {
-    setPeliculas: (movies: IMovie[]) => dispatch(setMovies(movies)),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(Index);
+export default Index;

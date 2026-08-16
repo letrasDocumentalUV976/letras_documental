@@ -6,21 +6,30 @@ import { HiUserAdd } from "react-icons/hi";
 import TextField from "@/component/TextField/TextField";
 import { FieldValues, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { IBook, IPrestamo, IStudent } from "@/interfaces/interfacesBooks";
+import { Book, Student } from "@/types";
+import {
+  createLoan,
+  createStudent,
+  fetchBooks,
+  fetchStudents,
+  selectBooks,
+  selectLoans,
+  selectStudents,
+  useV1Dispatch,
+  useV1Selector,
+} from "@/store";
 
 interface Props {
   closeModal: () => void;
   openModal: boolean;
-  prestamos: IPrestamo[];
-  setNewPrestamoObserver: (value: boolean) => void;
 }
 
-const Index = ({
-  closeModal,
-  openModal,
-  prestamos,
-  setNewPrestamoObserver,
-}: Props) => {
+const Index = ({ closeModal, openModal }: Props) => {
+  const dispatch = useV1Dispatch();
+  const students = useV1Selector(selectStudents);
+  const books = useV1Selector(selectBooks);
+  const loans = useV1Selector(selectLoans);
+
   const {
     register,
     handleSubmit,
@@ -29,138 +38,91 @@ const Index = ({
     reset,
   } = useForm();
   const [openModalStudent, setOpenModalStudent] = useState(false);
-  const [observerStudent, setObserverStudent] = useState(false);
 
-  const [students, setStudents] = useState<IStudent[]>([]);
-  const [books, setBooks] = useState<IBook[]>([]);
-
-  const [selectedBook, setSelectedBook] = useState<IBook | null>(null);
-  const [selectedStudent, setSelectedStudent] = useState<IStudent | null>(null);
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(
+    null
+  );
 
   const onSubmit = async (data: FieldValues) => {
-    if (!data.nombre || !data.matricula || !data.correo) {
+    if (!data.name || !data.enrollmentNumber || !data.email) {
       toast.error("Todos los campos son requeridos");
       return;
     }
 
-    const matriculaRegex = /^S\d{8}$/i;
-    const correoRegex = /^[\w.-]+@[a-zA-Z\d.-]+\.[a-zA-Z]{2,}$/;
+    const enrollmentRegex = /^S\d{8}$/i;
+    const emailRegex = /^[\w.-]+@[a-zA-Z\d.-]+\.[a-zA-Z]{2,}$/;
 
-    if (!matriculaRegex.test(data.matricula)) {
+    if (!enrollmentRegex.test(data.enrollmentNumber)) {
       toast.error("La matrícula debe empezar con 'S' y contener 8 dígitos.");
       return;
     }
 
-    if (!correoRegex.test(data.correo)) {
+    if (!emailRegex.test(data.email)) {
       toast.error("El correo no es válido");
       return;
     }
 
-    if (students.some((student) => student.matricula === data.matricula)) {
+    if (
+      students.some(
+        (student) => student.enrollmentNumber === data.enrollmentNumber
+      )
+    ) {
       toast.error("La matrícula ya ha sido registrada");
       return;
     }
 
-    try {
-      const response = await fetch("/api/estudiantes", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
-      });
-
-      const result = await response.json();
-
-      if (result.status === 200) {
+    dispatch(
+      createStudent({
+        name: data.name,
+        enrollmentNumber: data.enrollmentNumber,
+        email: data.email,
+      })
+    )
+      .unwrap()
+      .then(() => {
         reset();
-        setObserverStudent(true);
         setOpenModalStudent(false);
         toast.success("Estudiante guardado correctamente");
-      } else {
-        toast.error(result.message);
-      }
-    } catch (err) {
-      toast.error("Ocurrió un error, inténtelo más tarde");
-      console.log(err);
-    }
+      })
+      .catch(() => {
+        toast.error("Ocurrió un error, inténtelo más tarde");
+      });
   };
 
   useEffect(() => {
-    fetch("/api/estudiantes")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.status === 200) {
-          setStudents(data.data);
-        } else {
-          toast.error(data.message);
-        }
-      })
-      .catch((err) => console.log(err));
-  }, [observerStudent]);
-
-  useEffect(() => {
-    fetch("/api/estudiantes")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.status === 200) {
-          setStudents(data.data);
-        } else {
-          toast.error(data.message);
-        }
-      })
-      .catch((err) => console.log(err));
-
-    fetch("/api/libros")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.status === 200) {
-          setBooks(data.data);
-        } else {
-          toast.error(data.message);
-        }
-      })
-      .catch((err) => console.log(err));
-  }, []);
+    dispatch(fetchStudents());
+    dispatch(fetchBooks());
+  }, [dispatch]);
 
   const onSubmitPrestamo = (e: FieldValues) => {
     e.preventDefault();
     if (selectedBook && selectedStudent) {
-      const libroPrestado = prestamos.find((prestamo: IPrestamo) => {
-        if (
-          prestamo.libro.id === selectedBook.id &&
-          prestamo.estado === "Prestado"
-        ) {
-          return true;
-        }
-      });
+      const libroPrestado = loans.find(
+        (loan) =>
+          loan.book.id === selectedBook.id && loan.status === "Loaned"
+      );
 
       if (libroPrestado) {
         toast.error("El libro seleccionado ya ha sido prestado");
         return;
       }
 
-      const data = {
-        libro: selectedBook,
-        estudiante: selectedStudent,
-        estado: "Prestado",
-        fechaPrestamo: new Date().toLocaleDateString(),
-        fechaDevolucion: new Date(
-          new Date().setDate(new Date().getDate() + 15)
-        ).toLocaleDateString(),
-      };
-
-      fetch("/api/prestamo", {
-        method: "POST",
-        body: JSON.stringify(data),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.status === 200) {
-            toast.success(data.message);
-            setNewPrestamoObserver(true);
-            closeModal();
-          } else {
-            toast.error(data.message);
-          }
+      dispatch(
+        createLoan({
+          book: selectedBook,
+          student: selectedStudent,
+          status: "Loaned",
+          loanDate: new Date().toLocaleDateString(),
+          returnDate: new Date(
+            new Date().setDate(new Date().getDate() + 15)
+          ).toLocaleDateString(),
+        })
+      )
+        .unwrap()
+        .then(() => {
+          toast.success("Prestamo agregado correctamente");
+          closeModal();
         })
         .catch(() => toast.error("Ocurrio un error, intentelo más tarde"));
     } else {
@@ -191,35 +153,35 @@ const Index = ({
             <div className="flex flex-col gap-5">
               <TextField
                 label="Nombre Completo"
-                errors={!!errors.titulo}
+                errors={!!errors.name}
                 placeholder="Nombre Completo"
-                value={watch("nombre")}
+                value={watch("name")}
                 type={"text"}
                 isLabel={false}
                 message={""}
-                {...register("nombre")}
+                {...register("name")}
               />
 
               <TextField
                 label="Matrícula"
-                errors={!!errors.titulo}
+                errors={!!errors.enrollmentNumber}
                 placeholder="Matrícula"
-                value={watch("matricula")}
+                value={watch("enrollmentNumber")}
                 type={"text"}
                 isLabel={false}
                 message={""}
-                {...register("matricula")}
+                {...register("enrollmentNumber")}
               />
 
               <TextField
                 label="Correo"
-                errors={!!errors.titulo}
+                errors={!!errors.email}
                 placeholder="Correo"
-                value={watch("correo")}
+                value={watch("email")}
                 type={"text"}
                 isLabel={false}
                 message={""}
-                {...register("correo")}
+                {...register("email")}
               />
 
               <button
@@ -262,7 +224,7 @@ const Index = ({
                       <option value="">Seleccionar</option>
                       {books.map((book) => (
                         <option key={book.id} value={book.id}>
-                          {book.titulo}
+                          {book.title}
                         </option>
                       ))}
                     </select>
@@ -289,7 +251,7 @@ const Index = ({
                         <option value="">Seleccionar</option>
                         {students.map((student) => (
                           <option key={student.id} value={student.id}>
-                            {student.matricula}
+                            {student.enrollmentNumber}
                           </option>
                         ))}
                       </select>
@@ -306,18 +268,18 @@ const Index = ({
               <p className="text-2xl font-bold">Información de Prestamo</p>
               <div>
                 <p className="font-bold text-xl">Información del libro</p>
-                <p>Titulo: {selectedBook?.titulo}</p>
-                <p>Autor: {selectedBook?.autor}</p>
-                <p>Año: {selectedBook?.anioPublicacion}</p>
-                <p>Editorial: {selectedBook?.editorial}</p>
+                <p>Titulo: {selectedBook?.title}</p>
+                <p>Autor: {selectedBook?.author}</p>
+                <p>Año: {selectedBook?.publicationYear}</p>
+                <p>Editorial: {selectedBook?.publisher}</p>
               </div>
               <br />
 
               <div>
                 <p className="font-bold text-xl">Información del alumno</p>
-                <p>Nombre: {selectedStudent?.nombre}</p>
-                <p>Matricula: {selectedStudent?.matricula}</p>
-                <p>Correo: {selectedStudent?.correo}</p>
+                <p>Nombre: {selectedStudent?.name}</p>
+                <p>Matricula: {selectedStudent?.enrollmentNumber}</p>
+                <p>Correo: {selectedStudent?.email}</p>
               </div>
               <br />
 

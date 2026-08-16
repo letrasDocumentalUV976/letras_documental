@@ -11,20 +11,26 @@ import toast from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
 import Location from "@/component/Location/Location";
 import clsx from "clsx";
-import { IBook } from "@/interfaces/interfacesBooks";
-import { setBooks } from "@/redux/books";
-import { connect } from "react-redux";
-import { Dispatch } from "redux";
+import { Shelf } from "@/types";
+import {
+  createBook,
+  fetchBooks,
+  selectBooks,
+  selectBooksStatus,
+  updateBook,
+  useV1Dispatch,
+  useV1Selector,
+} from "@/store";
 
-interface IAgregarTextoProps {
-  setBooks: (movies: IBook[]) => void;
-}
-
-const AgregarTexto = ({ setBooks }: IAgregarTextoProps) => {
+const AgregarTexto = () => {
+  const dispatch = useV1Dispatch();
+  const books = useV1Selector(selectBooks);
+  const booksStatus = useV1Selector(selectBooksStatus);
   const [image, setImage] = useState<string>("");
-  const [respisaSelected, setRespisaSelected] = useState<string>("2");
+  const [shelfSelected, setShelfSelected] = useState<Shelf>("2");
   const router = useRouter();
   const params = useParams();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const [selectedCell, setSelectedCell] = useState<{
     col: number;
@@ -44,13 +50,13 @@ const AgregarTexto = ({ setBooks }: IAgregarTextoProps) => {
   });
 
   useEffect(() => {
-    const ubicacion = {
-      col: selectedCell?.col,
+    const location = {
+      column: selectedCell?.col,
       row: selectedCell?.row,
-      respisa: respisaSelected,
+      shelf: shelfSelected,
     };
-    setValue("ubicacion", ubicacion);
-  }, [respisaSelected, setValue, selectedCell?.col, selectedCell?.row]);
+    setValue("location", location);
+  }, [shelfSelected, setValue, selectedCell?.col, selectedCell?.row]);
 
   const handleUpload = async (file: File) => {
     if (!file) return alert("Selecciona una imagen primero");
@@ -66,59 +72,66 @@ const AgregarTexto = ({ setBooks }: IAgregarTextoProps) => {
     });
     const data = await response.json();
     if (data.url) {
-      setValue("imagen", data.url);
+      setValue("image", data.url);
       setImage(data.url);
     } else {
       alert("Error al subir la imagen");
     }
   };
 
-  const onSubmit = async (data: FieldValues) => {
-    data.imagen =
-      image ||
-      "https://res.cloudinary.com/dvt4vznxn/image/upload/v1736555915/yivyktkgvcjxprwwnwui.png";
-    data.id = Array.isArray(params.id) ? params.id[0] : params.id || "";
-    const response = await fetch(
-      `/api/libros/${params.id ? "editar" : "agregar"}`,
-      {
-        method: params.id ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      }
-    );
+  const onSubmit = (data: FieldValues) => {
+    const input = {
+      title: data.title,
+      author: data.author,
+      publisher: data.publisher,
+      publicationYear: data.publicationYear,
+      pageCount: data.pageCount,
+      type: data.type,
+      description: data.description,
+      quantity: data.quantity,
+      location: data.location,
+      image:
+        image ||
+        "https://res.cloudinary.com/dvt4vznxn/image/upload/v1736555915/yivyktkgvcjxprwwnwui.png",
+    };
 
-    const dataResponse = await response.json();
-    if (dataResponse.status === 200) {
-      toast.success(dataResponse.message);
-      setBooks([]);
-      router.push("/libros");
-    } else {
-      toast.error(dataResponse.message);
-    }
+    const result = id
+      ? dispatch(updateBook({ id, input })).unwrap()
+      : dispatch(createBook(input)).unwrap();
+
+    result
+      .then(() => {
+        toast.success(
+          id ? "Libro actualizado correctamente" : "Libro agregado correctamente"
+        );
+        router.push("/libros");
+      })
+      .catch(() => {
+        toast.error(
+          id ? "Error al actualizar el libro" : "Error al agregar el libro"
+        );
+      });
   };
 
   useEffect(() => {
-    if (params.id) {
-      fetch(`/api/libros/${params.id}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.status === 200) {
-            reset(data.data);
-            setImage(data.data.imagen);
-            setRespisaSelected(data.data.ubicacion.respisa);
-            setSelectedCell({
-              col: data.data.ubicacion.col,
-              row: data.data.ubicacion.row,
-            });
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+    if (id && booksStatus === "idle") {
+      dispatch(fetchBooks());
     }
-  }, [params.id, reset]);
+  }, [id, booksStatus, dispatch]);
+
+  useEffect(() => {
+    if (!id) return;
+    const book = books.find((item) => item.id === id);
+    if (book) {
+      reset(book);
+      setImage(book.image);
+      setShelfSelected(book.location.shelf);
+      setSelectedCell({
+        col: book.location.column ?? 0,
+        row: book.location.row ?? 0,
+      });
+    }
+  }, [id, books, reset]);
 
   return (
     <div className="grid grid-cols-3 p-5">
@@ -126,7 +139,7 @@ const AgregarTexto = ({ setBooks }: IAgregarTextoProps) => {
         <UploadImage
           image={image}
           handleImageCapture={handleUpload}
-          {...register("imagen")}
+          {...register("image")}
         />
       </div>
       <div className="col-span-2">
@@ -134,100 +147,100 @@ const AgregarTexto = ({ setBooks }: IAgregarTextoProps) => {
         <form className="flex flex-col justify-center items-center gap-5 py-5">
           <TextField
             label="Título"
-            errors={!!errors.titulo}
+            errors={!!errors.title}
             placeholder="Título"
-            value={watch("titulo")}
+            value={watch("title")}
             type={"text"}
             isLabel={false}
-            message={errors?.titulo?.message}
-            {...register("titulo")}
+            message={errors?.title?.message}
+            {...register("title")}
           />
 
           <TextField
             label="Autor"
-            errors={!!errors.titulo}
+            errors={!!errors.author}
             placeholder="Autor"
-            value={watch("autor")}
+            value={watch("author")}
             type={"text"}
             isLabel={false}
-            message={errors?.autor?.message}
-            {...register("autor")}
+            message={errors?.author?.message}
+            {...register("author")}
           />
 
           <TextField
             label="Editorial"
-            errors={!!errors.titulo}
+            errors={!!errors.publisher}
             placeholder="Editorial"
-            value={watch("editorial")}
+            value={watch("publisher")}
             type={"text"}
             isLabel={false}
-            message={errors?.editorial?.message}
-            {...register("editorial")}
+            message={errors?.publisher?.message}
+            {...register("publisher")}
           />
 
           <div className="flex flex-row justify-center items-center gap-5 w-full">
             <TextField
               label="Número de Página"
-              errors={!!errors.titulo}
+              errors={!!errors.pageCount}
               placeholder="Número de Página"
-              value={watch("numPag")}
+              value={watch("pageCount")}
               type={"text"}
               isLabel={false}
-              message={errors?.numPag?.message}
-              {...register("numPag")}
+              message={errors?.pageCount?.message}
+              {...register("pageCount")}
             />
 
             <TextField
               label="Año de Publicación"
-              errors={!!errors.titulo}
+              errors={!!errors.publicationYear}
               placeholder="Año de Publicación"
-              value={watch("anioPublicacion")}
+              value={watch("publicationYear")}
               type={"text"}
               isLabel={false}
-              message={errors?.anioPublicacion?.message}
-              {...register("anioPublicacion")}
+              message={errors?.publicationYear?.message}
+              {...register("publicationYear")}
             />
           </div>
           <TextField
             label="Tipo"
-            errors={!!errors.titulo}
+            errors={!!errors.type}
             placeholder="Tipo"
-            value={watch("tipo")}
+            value={watch("type")}
             type={"text"}
             isLabel={false}
-            message={errors?.tipo?.message}
-            {...register("tipo")}
+            message={errors?.type?.message}
+            {...register("type")}
           />
 
           <TextField
             label="N° Ejemplares"
-            errors={!!errors.cantidad}
+            errors={!!errors.quantity}
             placeholder="Número de Ejemplares"
-            value={watch("cantidad")?.toString()}
+            value={watch("quantity")?.toString()}
             type={"text"}
             isLabel={false}
-            message={errors?.cantidad?.message}
-            {...register("cantidad")}
+            message={errors?.quantity?.message}
+            {...register("quantity")}
           />
 
           <div className="w-full">
             <textarea
-              {...register("descripcion")}
+              {...register("description")}
               placeholder="Descripción"
               className="w-full min-h-[120px] max-h-[200px] border-solid border-gray-400 border-[1px] rounded-md outline-none p-2"
             />
-            {errors.descripcion && (
-              <p className="text-red-500">{errors.descripcion.message}</p>
+            {errors.description && (
+              <p className="text-red-500">{errors.description.message}</p>
             )}
           </div>
 
           <div className="flex flex-row justify-center items-center w-full text-center">
             <button
               type="button"
-              onClick={() => setRespisaSelected("1")}
+              onClick={() => setShelfSelected("1")}
               className={clsx(
                 "p-2 border-[1px] w-full border-primary",
-                respisaSelected === "1"
+                shelfSelected === "1"
                   ? "bg-primary text-white"
                   : "bg-white  text-primary"
               )}
@@ -236,10 +249,10 @@ const AgregarTexto = ({ setBooks }: IAgregarTextoProps) => {
             </button>
             <button
               type="button"
-              onClick={() => setRespisaSelected("2")}
+              onClick={() => setShelfSelected("2")}
               className={clsx(
                 "p-2 border-[1px] w-full border-primary",
-                respisaSelected === "2"
+                shelfSelected === "2"
                   ? "bg-primary text-white"
                   : "bg-white  text-primary"
               )}
@@ -250,12 +263,12 @@ const AgregarTexto = ({ setBooks }: IAgregarTextoProps) => {
           <Location
             selectedCell={selectedCell}
             setSelectedCell={setSelectedCell}
-            row={respisaSelected === "1" ? 3 : 4}
-            col={respisaSelected === "1" ? 5 : 6}
+            row={shelfSelected === "1" ? 3 : 4}
+            col={shelfSelected === "1" ? 5 : 6}
           />
-          {errors.ubicacion && (
+          {errors.location && (
             <p className="text-center text-red-500">
-              {errors.ubicacion.message}
+              {errors.location.message}
             </p>
           )}
         </form>
@@ -263,12 +276,12 @@ const AgregarTexto = ({ setBooks }: IAgregarTextoProps) => {
           <button
             onClick={() =>
               reset({
-                titulo: "",
-                autor: "",
-                editorial: "",
-                numPag: "",
-                anioPublicacion: "",
-                tipo: "",
+                title: "",
+                author: "",
+                publisher: "",
+                pageCount: "",
+                publicationYear: "",
+                type: "",
               })
             }
             className="bg-white text-primary p-2 rounded-md w-1/4 border-primary border-2"
@@ -279,7 +292,7 @@ const AgregarTexto = ({ setBooks }: IAgregarTextoProps) => {
             className="bg-primary text-white p-2 rounded-md w-1/4"
             onClick={handleSubmit(onSubmit)}
           >
-            {params.id ? "Actualizar" : "Agregar"}
+            {id ? "Actualizar" : "Agregar"}
           </button>
         </div>
       </div>
@@ -287,10 +300,4 @@ const AgregarTexto = ({ setBooks }: IAgregarTextoProps) => {
   );
 };
 
-const mapDispatchToProps = (dispatch: Dispatch) => {
-  return {
-    setBooks: (movies: IBook[]) => dispatch(setBooks(movies)),
-  };
-};
-
-export default connect(null, mapDispatchToProps)(AgregarTexto);
+export default AgregarTexto;

@@ -7,10 +7,23 @@ import TextField from "@/component/TextField/TextField";
 import toast from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
 import { UserValidator } from "@/validator/UsuariosValidatos";
+import {
+  createUser,
+  fetchUsers,
+  selectUsers,
+  selectUsersStatus,
+  updateUser,
+  useV1Dispatch,
+  useV1Selector,
+} from "@/store";
 
-const AgregarPelicula = () => {
+const AgregarUsuario = () => {
+  const dispatch = useV1Dispatch();
+  const users = useV1Selector(selectUsers);
+  const usersStatus = useV1Selector(selectUsersStatus);
   const router = useRouter();
   const params = useParams();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const {
     register,
@@ -23,54 +36,42 @@ const AgregarPelicula = () => {
     resolver: yupResolver(UserValidator),
   });
 
-  const onSubmit = async (data: FieldValues) => {
-    data.id = params.id || "";
+  const onSubmit = (data: FieldValues) => {
+    const input = {
+      name: data.name,
+      email: data.email,
+      password: data.password,
+    };
 
-    // Envolver la operación en toast.promise
-    await toast.promise(
-      new Promise(async (resolve, reject) => {
-        try {
-          const response = await fetch(`/api/usuarios`, {
-            method: params.id ? "PUT" : "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data),
-          });
-          const dataResponse = await response.json();
+    const loadingToast = toast.loading("Guardando datos...");
+    const result = id
+      ? dispatch(updateUser({ id, input })).unwrap()
+      : dispatch(createUser(input)).unwrap();
 
-          if (dataResponse.status === 200) {
-            resolve(dataResponse.message);
-            router.push("/usuario");
-          } else {
-            reject(new Error(dataResponse.message));
-          }
-        } catch (error) {
-          reject(error);
-        }
-      }),
-      {
-        loading: "Guardando datos...",
-        success: params.id ? "¡Usuario actualizado!" : "¡Usuario agregado!",
-        error: "Error al guardar los datos.",
-      }
-    );
+    result
+      .then(() => {
+        toast.success(id ? "¡Usuario actualizado!" : "¡Usuario agregado!");
+        router.push("/usuario");
+      })
+      .catch(() => {
+        toast.error("Error al guardar los datos.");
+      })
+      .finally(() => toast.dismiss(loadingToast));
   };
 
   useEffect(() => {
-    if (params.id) {
-      fetch(`/api/usuarios/${params.id}`, { method: "GET" })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.status === 200) {
-            reset(data.data);
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+    if (id && usersStatus === "idle") {
+      dispatch(fetchUsers());
     }
-  }, [params.id, reset]);
+  }, [id, usersStatus, dispatch]);
+
+  useEffect(() => {
+    if (!id) return;
+    const user = users.find((item) => item.id === id);
+    if (user) {
+      reset({ name: user.name, email: user.email, password: "" });
+    }
+  }, [id, users, reset]);
 
   return (
     <div className="flex justify-center items-center w-full">
@@ -79,24 +80,24 @@ const AgregarPelicula = () => {
         <form className="flex flex-col justify-center items-center gap-5 py-5">
           <TextField
             label="Nombre"
-            errors={!!errors.nombre}
+            errors={!!errors.name}
             placeholder="Nombre"
-            value={watch("nombre")}
+            value={watch("name")}
             type={"text"}
             isLabel={false}
-            message={errors?.nombre?.message}
-            {...register("nombre")}
+            message={errors?.name?.message}
+            {...register("name")}
           />
 
           <TextField
             label="Correo"
-            errors={!!errors.correo}
+            errors={!!errors.email}
             placeholder="Correo"
-            value={watch("correo")}
+            value={watch("email")}
             type={"text"}
             isLabel={false}
-            message={errors?.correo?.message}
-            {...register("correo")}
+            message={errors?.email?.message}
+            {...register("email")}
           />
 
           <TextField
@@ -104,7 +105,7 @@ const AgregarPelicula = () => {
             errors={!!errors.password}
             placeholder="Contraseña"
             value={watch("password")}
-            type={"text"}
+            type={"password"}
             isLabel={false}
             message={errors?.password?.message}
             {...register("password")}
@@ -114,8 +115,8 @@ const AgregarPelicula = () => {
           <button
             onClick={() =>
               reset({
-                nombre: "",
-                correo: "",
+                name: "",
+                email: "",
                 password: "",
               })
             }
@@ -127,7 +128,7 @@ const AgregarPelicula = () => {
             className="bg-primary text-white p-2 rounded-md w-1/4"
             onClick={handleSubmit(onSubmit)}
           >
-            {params.id ? "Actualizar" : "Agregar"}
+            {id ? "Actualizar" : "Agregar"}
           </button>
         </div>
       </div>
@@ -135,4 +136,4 @@ const AgregarPelicula = () => {
   );
 };
 
-export default AgregarPelicula;
+export default AgregarUsuario;

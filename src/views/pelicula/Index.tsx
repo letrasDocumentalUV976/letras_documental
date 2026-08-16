@@ -1,86 +1,52 @@
 "use client";
 
 import LinkButton from "@/component/LinkButton/LinkButton";
-import { IGlobal } from "@/interfaces/globalState";
-import { IMovie } from "@/interfaces/interfacesBooks";
-import { setMovies } from "@/redux/movies";
-import { Dispatch } from "@reduxjs/toolkit";
+import { Movie } from "@/types";
+import {
+  deleteMovie,
+  fetchMovies,
+  selectMovies,
+  selectMoviesStatus,
+  useV1Dispatch,
+  useV1Selector,
+} from "@/store";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { MdModeEditOutline } from "react-icons/md";
 import { MdDelete } from "react-icons/md";
-import { connect } from "react-redux";
 import Loading from "@/component/Loader/Loader";
 import Empty from "@/component/Empty/Empty";
 
-interface IIndexProps {
-  movies: IMovie[];
-  setPeliculas: (movies: IMovie[]) => void;
-}
-
-const Index = ({ movies, setPeliculas }: IIndexProps) => {
+const Index = () => {
+  const dispatch = useV1Dispatch();
+  const movies = useV1Selector(selectMovies);
+  const moviesStatus = useV1Selector(selectMoviesStatus);
   const router = useRouter();
   const [peliculasSeleccionadas, setPeliculasSeleccionadas] =
-    useState<IMovie>();
-  const [loadingType, setLoadingType] = useState<{
-    isLoading: boolean;
-    isDeleting: boolean;
-  }>({
-    isLoading: true,
-    isDeleting: false,
-  });
+    useState<Movie>();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    handleGetPeliculas();
-  }, []);
-
-  const handleGetPeliculas = async () => {
-    if (movies === undefined || movies?.length < 1) {
-      fetch("/api/peliculas")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.status === 200) {
-            setPeliculas(data.data);
-          } else {
-            toast.error("Por el momento no es posible obtener las peliculas");
-          }
-          setLoadingType({
-            ...loadingType,
-            isLoading: false,
-          });
-        });
-    } else {
-      setLoadingType({
-        ...loadingType,
-        isLoading: false,
-      });
-    }
-  };
+    dispatch(fetchMovies());
+  }, [dispatch]);
 
   const handleDelete = async () => {
-    if (loadingType?.isDeleting) return;
-    fetch(`/api/peliculas/delete/${peliculasSeleccionadas?.id}`, {
-      method: "DELETE",
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.status === 200) {
-          handleGetPeliculas();
-        } else {
-          toast.error(data.message);
-        }
-      })
+    if (isDeleting || !peliculasSeleccionadas) return;
+    setIsDeleting(true);
+    dispatch(deleteMovie(peliculasSeleccionadas.id))
+      .unwrap()
       .catch(() => {
         toast.error("Error al eliminar la pelicula");
       })
       .finally(() => {
         setPeliculasSeleccionadas(undefined);
+        setIsDeleting(false);
       });
   };
 
-  if (loadingType.isLoading) return <Loading />;
+  if (moviesStatus === "loading" || moviesStatus === "idle") return <Loading />;
 
   return (
     <>
@@ -128,7 +94,7 @@ const Index = ({ movies, setPeliculas }: IIndexProps) => {
                 </tr>
               </thead>
               <tbody className="text-center">
-                {movies?.map((pelicula: IMovie) => (
+                {movies?.map((pelicula: Movie) => (
                   <tr
                     key={pelicula.id}
                     onClick={() => setPeliculasSeleccionadas(pelicula)}
@@ -139,19 +105,19 @@ const Index = ({ movies, setPeliculas }: IIndexProps) => {
                     )}
                   >
                     <td className="border border-gray-400 px-4 py-2">
-                      {pelicula.titulo}
+                      {pelicula.title}
                     </td>
                     <td className="border border-gray-400 px-4 py-2">
                       {pelicula.director}
                     </td>
                     <td className="border border-gray-400 px-4 py-2">
-                      {pelicula.anioPublicacion}
+                      {pelicula.publicationYear}
                     </td>
                     <td className="border border-gray-400 px-4 py-2">
-                      {pelicula.tipo}
+                      {pelicula.type}
                     </td>
                     <td className="border border-gray-400 px-4 py-2">
-                      {pelicula.duracion}
+                      {pelicula.duration}
                     </td>
                   </tr>
                 ))}
@@ -170,16 +136,4 @@ const Index = ({ movies, setPeliculas }: IIndexProps) => {
   );
 };
 
-const mapStateToProps = (state: IGlobal) => {
-  return {
-    movies: state.movies.movies || [],
-  };
-};
-
-const mapDispatchToProps = (dispatch: Dispatch) => {
-  return {
-    setPeliculas: (movies: IMovie[]) => dispatch(setMovies(movies)),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(Index);
+export default Index;

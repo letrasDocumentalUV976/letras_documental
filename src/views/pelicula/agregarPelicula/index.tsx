@@ -12,19 +12,25 @@ import TextList from "@/component/TextList/TextList";
 import { useParams, useRouter } from "next/navigation";
 import { countries } from "@/utils/Countries";
 import { languages } from "@/utils/Languages";
-import { connect } from "react-redux";
-import { IMovie } from "@/interfaces/interfacesBooks";
-import { setMovies } from "@/redux/movies";
-import { Dispatch } from "@reduxjs/toolkit";
+import { MovieCopyType, YesNo } from "@/types";
+import {
+  createMovie,
+  fetchMovies,
+  selectMovies,
+  selectMoviesStatus,
+  updateMovie,
+  useV1Dispatch,
+  useV1Selector,
+} from "@/store";
 
-interface IAgregarTextoProps {
-  setMovies: (movies: IMovie[]) => void;
-}
-
-const AgregarPelicula = ({ setMovies }: IAgregarTextoProps) => {
+const AgregarPelicula = () => {
+  const dispatch = useV1Dispatch();
+  const movies = useV1Selector(selectMovies);
+  const moviesStatus = useV1Selector(selectMoviesStatus);
   const [image, setImage] = useState<string>("");
   const router = useRouter();
   const params = useParams();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const {
     register,
@@ -52,55 +58,63 @@ const AgregarPelicula = ({ setMovies }: IAgregarTextoProps) => {
     });
     const data = await response.json();
     if (data.url) {
-      setValue("imagen", data.url);
+      setValue("image", data.url);
       setImage(data.url);
     } else {
       alert("Error al subir la imagen");
     }
   };
 
-  const onSubmit = async (data: FieldValues) => {
-    data.imagen =
-      image ||
-      "https://res.cloudinary.com/dvt4vznxn/image/upload/v1736555915/yivyktkgvcjxprwwnwui.png";
-    data.id = params.id || "";
+  const onSubmit = (data: FieldValues) => {
+    const input = {
+      title: data.title,
+      director: data.director,
+      publicationYear: data.publicationYear,
+      type: data.type,
+      duration: data.duration,
+      genre: data.genre,
+      country: data.country,
+      language: data.language,
+      subtitles: data.subtitles,
+      image:
+        image ||
+        "https://res.cloudinary.com/dvt4vznxn/image/upload/v1736555915/yivyktkgvcjxprwwnwui.png",
+    };
 
-    const response = await fetch(
-      `/api/peliculas/${params.id ? "editar" : "agregar"}`,
-      {
-        method: params.id ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      }
-    );
+    const result = id
+      ? dispatch(updateMovie({ id, input })).unwrap()
+      : dispatch(createMovie(input)).unwrap();
 
-    const dataResponse = await response.json();
-    if (dataResponse.status === 200) {
-      toast.success(dataResponse.message);
-      setMovies([]);
-      router.push("/pelicula");
-    } else {
-      toast.error(dataResponse.message);
-    }
+    result
+      .then(() => {
+        toast.success(
+          id
+            ? "Pelicula actualizada correctamente"
+            : "Pelicula agregada correctamente"
+        );
+        router.push("/pelicula");
+      })
+      .catch(() => {
+        toast.error(
+          id ? "Error al actualizar la pelicula" : "Error al agregar la pelicula"
+        );
+      });
   };
 
   useEffect(() => {
-    if (params.id) {
-      fetch(`/api/peliculas/${params.id}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.status === 200) {
-            reset(data.data);
-            setImage(data.data.imagen);
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+    if (id && moviesStatus === "idle") {
+      dispatch(fetchMovies());
     }
-  }, [params.id, reset]);
+  }, [id, moviesStatus, dispatch]);
+
+  useEffect(() => {
+    if (!id) return;
+    const movie = movies.find((item) => item.id === id);
+    if (movie) {
+      reset(movie);
+      setImage(movie.image);
+    }
+  }, [id, movies, reset]);
 
   return (
     <div className="grid grid-cols-3 p-5">
@@ -108,7 +122,7 @@ const AgregarPelicula = ({ setMovies }: IAgregarTextoProps) => {
         <UploadImage
           image={image}
           handleImageCapture={handleUpload}
-          {...register("imagen")}
+          {...register("image")}
         />
       </div>
       <div className="col-span-2">
@@ -116,13 +130,13 @@ const AgregarPelicula = ({ setMovies }: IAgregarTextoProps) => {
         <form className="flex flex-col justify-center items-center gap-5 py-5">
           <TextField
             label="Título"
-            errors={!!errors.titulo}
+            errors={!!errors.title}
             placeholder="Título"
-            value={watch("titulo")}
+            value={watch("title")}
             type={"text"}
             isLabel={false}
-            message={errors?.titulo?.message}
-            {...register("titulo")}
+            message={errors?.title?.message}
+            {...register("title")}
           />
 
           <TextField
@@ -139,30 +153,32 @@ const AgregarPelicula = ({ setMovies }: IAgregarTextoProps) => {
           <div className="flex flex-row justify-between items-center gap-5 w-full">
             <TextField
               label="Año de Publicación"
-              errors={!!errors.anioPublicacion}
+              errors={!!errors.publicationYear}
               placeholder="Año de Publicación"
-              value={watch("anioPublicacion")}
+              value={watch("publicationYear")}
               type={"text"}
               isLabel={false}
-              message={errors?.anioPublicacion?.message}
-              {...register("anioPublicacion")}
+              message={errors?.publicationYear?.message}
+              {...register("publicationYear")}
             />
 
             <div className="w-full border border-gray-400 rounded-md p-1 relative">
               <select
                 name=""
                 id=""
-                value={watch("tipo")}
+                value={watch("type")}
                 className="border-transparent w-full h-full p-2 outline-none"
-                onChange={(e) => setValue("tipo", e.target.value)}
+                onChange={(e) =>
+                  setValue("type", e.target.value as MovieCopyType)
+                }
               >
                 <option value="">Seleccionar</option>
                 <option value="original">Original</option>
-                <option value="copia">Copia</option>
-                <option value="blue">Blue Ray</option>
+                <option value="copy">Copia</option>
+                <option value="bluray">Blue Ray</option>
               </select>
-              {!!errors.tipo && (
-                <p className="text-red-500">{errors.tipo.message}</p>
+              {!!errors.type && (
+                <p className="text-red-500">{errors.type.message}</p>
               )}
             </div>
           </div>
@@ -170,43 +186,43 @@ const AgregarPelicula = ({ setMovies }: IAgregarTextoProps) => {
           <div className="flex flex-row justify-between items-center gap-5 w-full">
             <TextField
               label="Duración"
-              errors={!!errors.duracion}
+              errors={!!errors.duration}
               placeholder="Duración"
-              value={watch("duracion")}
+              value={watch("duration")}
               type={"text"}
               isLabel={false}
-              message={errors?.duracion?.message}
-              {...register("duracion")}
+              message={errors?.duration?.message}
+              {...register("duration")}
             />
 
             <TextField
               label="Género"
-              errors={!!errors.genero}
+              errors={!!errors.genre}
               placeholder="Género"
-              value={watch("genero")}
+              value={watch("genre")}
               type={"text"}
               isLabel={false}
-              message={errors?.genero?.message}
-              {...register("genero")}
+              message={errors?.genre?.message}
+              {...register("genre")}
             />
           </div>
 
           <TextList
-            register={register("pais")}
+            register={register("country")}
             options={countries}
             placeholder="Pais"
-            errors={!!errors.pais}
-            message={errors?.pais?.message}
+            errors={!!errors.country}
+            message={errors?.country?.message}
           />
 
           <div className="flex flex-row justify-between items-center gap-5 w-full">
             <div className="w-full">
               <TextList
-                register={register("idioma")}
+                register={register("language")}
                 options={languages}
                 placeholder="Idioma"
-                errors={!!errors.idioma}
-                message={errors?.idioma?.message}
+                errors={!!errors.language}
+                message={errors?.language?.message}
               />
             </div>
 
@@ -214,16 +230,18 @@ const AgregarPelicula = ({ setMovies }: IAgregarTextoProps) => {
               <select
                 name=""
                 id=""
-                value={watch("subtitulos")}
+                value={watch("subtitles")}
                 className="border-transparent w-full h-full p-2 outline-none"
-                onChange={(e) => setValue("subtitulos", e.target.value)}
+                onChange={(e) =>
+                  setValue("subtitles", e.target.value as YesNo)
+                }
               >
                 <option value="">Seleccionar</option>
-                <option value="si">Si</option>
+                <option value="yes">Si</option>
                 <option value="no">No</option>
               </select>
-              {!!errors.subtitulos && (
-                <p className="text-red-500">{errors.subtitulos.message}</p>
+              {!!errors.subtitles && (
+                <p className="text-red-500">{errors.subtitles.message}</p>
               )}
             </div>
           </div>
@@ -232,16 +250,14 @@ const AgregarPelicula = ({ setMovies }: IAgregarTextoProps) => {
           <button
             onClick={() =>
               reset({
-                titulo: "",
+                title: "",
                 director: "",
-                anioPublicacion: "",
-                tipo: "",
-                duracion: "",
-                genero: "",
-                pais: "",
-                idioma: "",
-                subtitulos: "",
-                imagen: "",
+                publicationYear: "",
+                duration: "",
+                genre: "",
+                country: "",
+                language: "",
+                image: "",
               })
             }
             className="bg-white text-primary p-2 rounded-md w-1/4 border-primary border-2"
@@ -252,7 +268,7 @@ const AgregarPelicula = ({ setMovies }: IAgregarTextoProps) => {
             className="bg-primary text-white p-2 rounded-md w-1/4"
             onClick={handleSubmit(onSubmit)}
           >
-            {params.id ? "Actualizar" : "Agregar"}
+            {id ? "Actualizar" : "Agregar"}
           </button>
         </div>
       </div>
@@ -260,10 +276,4 @@ const AgregarPelicula = ({ setMovies }: IAgregarTextoProps) => {
   );
 };
 
-const mapDispatchToProps = (dispatch: Dispatch) => {
-  return {
-    setMovies: (movies: IMovie[]) => dispatch(setMovies(movies)),
-  };
-};
-
-export default connect(null, mapDispatchToProps)(AgregarPelicula);
+export default AgregarPelicula;

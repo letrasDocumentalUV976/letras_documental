@@ -1,7 +1,15 @@
 "use client";
 
 import LinkButton from "@/component/LinkButton/LinkButton";
-import { IUsuario } from "@/interfaces/interfacesBooks";
+import { PublicUser } from "@/types";
+import {
+  deleteUser,
+  fetchUsers,
+  selectUsers,
+  selectUsersStatus,
+  useV1Dispatch,
+  useV1Selector,
+} from "@/store";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -12,59 +20,34 @@ import Loading from "@/component/Loader/Loader";
 import Empty from "@/component/Empty/Empty";
 
 const Index = () => {
+  const dispatch = useV1Dispatch();
+  const usuarios = useV1Selector(selectUsers);
+  const usersStatus = useV1Selector(selectUsersStatus);
   const router = useRouter();
-  const [usuarios, setUsuario] = useState([]);
   const [usuarioSeleccionado, setUsuarioSeleccionado] =
-    useState<IUsuario | null>(null);
-  const [loadingType, setLoadingType] = useState<{
-    isLoading: boolean;
-    isDeleting: boolean;
-  }>({
-    isLoading: true,
-    isDeleting: false,
-  });
+    useState<PublicUser | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    handleGetUsuarios();
-  }, []);
-
-  const handleGetUsuarios = async () => {
-    fetch("/api/usuarios")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.status === 200) {
-          setUsuario(data.data);
-        } else {
-          toast.error("Por el momento no es posible obtener las peliculas");
-        }
-        setLoadingType({
-          ...loadingType,
-          isLoading: false,
-        });
-      });
-  };
-
-  if (loadingType.isLoading) return <Loading />;
+    dispatch(fetchUsers());
+  }, [dispatch]);
 
   const handleDelete = async () => {
-    if (loadingType?.isDeleting) return;
-    fetch(`/api/usuarios/delete/${usuarioSeleccionado?.id}`, {
-      method: "DELETE",
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.status === 200) {
-          toast.success(data.message);
-          setUsuarioSeleccionado(null);
-          handleGetUsuarios();
-        } else {
-          toast.error(data.message);
-        }
+    if (isDeleting || !usuarioSeleccionado) return;
+    setIsDeleting(true);
+    dispatch(deleteUser(usuarioSeleccionado.id))
+      .unwrap()
+      .then(() => {
+        toast.success("Usuario eliminado correctamente");
+        setUsuarioSeleccionado(null);
       })
       .catch(() => {
-        toast.error("Error al eliminar la pelicula");
-      });
+        toast.error("Error al eliminar el usuario");
+      })
+      .finally(() => setIsDeleting(false));
   };
+
+  if (usersStatus === "loading" || usersStatus === "idle") return <Loading />;
 
   return (
     <>
@@ -109,7 +92,7 @@ const Index = () => {
                 </tr>
               </thead>
               <tbody className="text-center">
-                {usuarios.map((usuario: IUsuario) => (
+                {usuarios.map((usuario) => (
                   <tr
                     key={usuario.id}
                     onClick={() => setUsuarioSeleccionado(usuario)}
@@ -120,10 +103,10 @@ const Index = () => {
                     )}
                   >
                     <td className="border border-gray-400 px-4 py-2">
-                      {usuario.nombre}
+                      {usuario.name}
                     </td>
                     <td className="border border-gray-400 px-4 py-2">
-                      {usuario.correo}
+                      {usuario.email}
                     </td>
                   </tr>
                 ))}

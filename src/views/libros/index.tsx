@@ -1,86 +1,54 @@
 "use client";
 
 import LinkButton from "@/component/LinkButton/LinkButton";
-import { IGlobal } from "@/interfaces/globalState";
-import { IBook } from "@/interfaces/interfacesBooks";
-import { setBooks } from "@/redux/books";
-import { Dispatch } from "@reduxjs/toolkit";
+import { Book } from "@/types";
+import {
+  deleteBook,
+  fetchBooks,
+  selectBooks,
+  selectBooksStatus,
+  useV1Dispatch,
+  useV1Selector,
+} from "@/store";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { MdModeEditOutline } from "react-icons/md";
 import { MdDelete } from "react-icons/md";
-import { connect } from "react-redux";
 import Loading from "@/component/Loader/Loader";
 import Empty from "@/component/Empty/Empty";
 
-interface IProps {
-  books: IBook[];
-  setBooks: (books: IBook[]) => void;
-}
-
-const Index = ({ books, setBooks }: IProps) => {
+const Index = () => {
+  const dispatch = useV1Dispatch();
+  const books = useV1Selector(selectBooks);
+  const booksStatus = useV1Selector(selectBooksStatus);
   const router = useRouter();
-  const [librosSeleccionados, setLibrosSeleccionados] = useState<IBook | null>(
+  const [librosSeleccionados, setLibrosSeleccionados] = useState<Book | null>(
     null
   );
-  const [loadingType, setLoadingType] = useState<{
-    isLoading: boolean;
-    isDeleting: boolean;
-  }>({
-    isLoading: true,
-    isDeleting: false,
-  });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    handleGetLibros();
-  }, []);
-
-  const handleGetLibros = async () => {
-    if (books === undefined || books?.length < 1) {
-      fetch("/api/libros")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.status === 200) {
-            setBooks(data.data);
-          } else {
-            toast.error("Por el momento no es posible obtener los libros");
-          }
-          setLoadingType({
-            ...loadingType,
-            isLoading: false,
-          });
-        });
-    } else {
-      setLoadingType({
-        ...loadingType,
-        isLoading: false,
-      });
-    }
-  };
+    dispatch(fetchBooks());
+  }, [dispatch]);
 
   const handleDelete = async () => {
-    if (loadingType?.isDeleting) return;
-    fetch(`/api/libros/delete/${librosSeleccionados?.id}`, {
-      method: "DELETE",
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.status === 200) {
-          toast.success(data.message);
-          setLibrosSeleccionados(null);
-          handleGetLibros();
-        } else {
-          toast.error(data.message);
-        }
+    if (isDeleting || !librosSeleccionados) return;
+    setIsDeleting(true);
+    dispatch(deleteBook(librosSeleccionados.id))
+      .unwrap()
+      .then(() => {
+        toast.success("Libro eliminado correctamente");
+        setLibrosSeleccionados(null);
       })
       .catch(() => {
         toast.error("Error al eliminar el libro");
-      });
+      })
+      .finally(() => setIsDeleting(false));
   };
 
-  if (loadingType.isLoading) return <Loading />;
+  if (booksStatus === "loading" || booksStatus === "idle") return <Loading />;
 
   return (
     <>
@@ -129,7 +97,7 @@ const Index = ({ books, setBooks }: IProps) => {
                 </tr>
               </thead>
               <tbody className="text-center">
-                {books.map((libro: IBook) => (
+                {books.map((libro: Book) => (
                   <tr
                     key={libro.id}
                     onClick={() => setLibrosSeleccionados(libro)}
@@ -140,22 +108,22 @@ const Index = ({ books, setBooks }: IProps) => {
                     )}
                   >
                     <td className="border border-gray-400 px-4 py-2">
-                      {libro.titulo}
+                      {libro.title}
                     </td>
                     <td className="border border-gray-400 px-4 py-2">
-                      {libro.autor}
+                      {libro.author}
                     </td>
                     <td className="border border-gray-400 px-4 py-2">
-                      {libro.anioPublicacion}
+                      {libro.publicationYear}
                     </td>
                     <td className="border border-gray-400 px-4 py-2">
-                      {libro.editorial}
+                      {libro.publisher}
                     </td>
                     <td className="border border-gray-400 px-4 py-2">
-                      {libro.tipo}
+                      {libro.type}
                     </td>
                     <td className="border border-gray-400 px-4 py-2">
-                      {libro.numPag}
+                      {libro.pageCount}
                     </td>
                   </tr>
                 ))}
@@ -174,16 +142,4 @@ const Index = ({ books, setBooks }: IProps) => {
   );
 };
 
-const mapStateToProps = (state: IGlobal) => {
-  return {
-    books: state.books.books || [],
-  };
-};
-
-const mapDispatchToProps = (dispatch: Dispatch) => {
-  return {
-    setBooks: (books: IBook[]) => dispatch(setBooks(books)),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(Index);
+export default Index;

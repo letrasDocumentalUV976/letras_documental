@@ -6,40 +6,25 @@ import Image from "next/image";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useForm, FieldValues } from "react-hook-form";
-import { IUsuario } from "@/interfaces/interfacesBooks";
-import { setUsuario } from "@/redux/usuario";
-import { connect } from "react-redux";
-import { Dispatch } from "@reduxjs/toolkit";
-import { IGlobal } from "@/interfaces/globalState";
+import { login, useV1Dispatch } from "@/store";
 
-interface ILoginProps {
-  setUser: (user: IUsuario) => void;
-}
-
-const Login = ({ setUser }: ILoginProps) => {
+const Login = () => {
   const router = useRouter();
+  const dispatch = useV1Dispatch();
   const { register, watch, handleSubmit } = useForm();
 
-  const onSubmit = (e: FieldValues) => {
+  const onSubmit = (data: FieldValues) => {
     if (typeof window === "undefined") return;
-    fetch("/api/usuarios/login", {
-      method: "POST",
-      body: JSON.stringify(e),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.status === 200) {
-          setUser(data.user);
-          localStorage.setItem("autenticado", "true");
-          localStorage.setItem("user", JSON.stringify(data.user));
-          toast.success(data.message);
-          router.push("/inicio");
-        } else {
-          toast.error(data.message);
-        }
+    dispatch(login({ email: data.email, password: data.password }))
+      .unwrap()
+      .then((user) => {
+        localStorage.setItem("autenticado", "true");
+        localStorage.setItem("user", JSON.stringify(user));
+        toast.success("Usuario autenticado correctamente");
+        router.push("/inicio");
       })
-      .catch((err) => {
-        console.log(err);
+      .catch(() => {
+        toast.error("Error al autenticar el usuario");
       });
   };
 
@@ -58,10 +43,10 @@ const Login = ({ setUser }: ILoginProps) => {
         <TextField
           label="Correo"
           placeholder="Correo"
-          value={watch("correo")}
+          value={watch("email")}
           type={"text"}
           isLabel={false}
-          {...register("correo")}
+          {...register("email")}
         />
 
         <TextField
@@ -81,16 +66,4 @@ const Login = ({ setUser }: ILoginProps) => {
   );
 };
 
-const mapStateToProps = (state: IGlobal) => {
-  return {
-    usuario: state.user.usuario,
-  };
-};
-
-const mapDispatchToProps = (dispatch: Dispatch) => {
-  return {
-    setUser: (user: IUsuario) => dispatch(setUsuario(user)),
-  };
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(Login);
+export default Login;
