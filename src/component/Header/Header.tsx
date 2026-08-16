@@ -1,18 +1,37 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CiLogout } from "react-icons/ci";
+import { CiLogout, CiLogin } from "react-icons/ci";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { IoClose } from "react-icons/io5";
-import { CiLogin } from "react-icons/ci";
 
 import Logo from "../../../public/Logo.png";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
+
+type NavLink = {
+  href: string;
+  label: string;
+};
+
+const publicLinks: NavLink[] = [
+  { href: "/library", label: "Biblioteca" },
+  { href: "/videos", label: "Videoteca" },
+];
+
+const privateLinks: NavLink[] = [
+  { href: "/", label: "Inicio" },
+  { href: "/loans", label: "Préstamos" },
+  { href: "/books", label: "Libros" },
+  { href: "/movies", label: "Película" },
+  { href: "/users", label: "Usuarios" },
+];
 
 const Header = () => {
   const [active, setActive] = useState(false);
   const [isLogged, setIsLogged] = useState(false);
+  const pathname = usePathname();
 
   const handleClick = () => {
     setActive(!active);
@@ -35,107 +54,146 @@ const Header = () => {
     setActive(false);
   };
 
-  if (active) {
-    return (
-      <div className="fixed hrefp-0 left-0 z-50 flex flex-col items-center justify-center w-screen h-screen bg-primary">
-        <div className="absolute top-5 right-5" onClick={handleClick}>
-          <IoClose color={"white"} size={28} />
-        </div>
+  const navLinks = isLogged ? [...privateLinks, ...publicLinks] : publicLinks;
 
-        <ul className="text-white">
-          <li className="p-4 text-lg font-bold text-center">
-            <Link onClick={desactiveMenu} href={"/"}>
-              Inicio
-            </Link>
-          </li>
-
-          <li className="p-4 text-lg font-bold text-center">
-            <Link onClick={desactiveMenu} href={"/library"}>
-              Biblioteca
-            </Link>
-          </li>
-          <li className="p-4 text-lg font-bold text-center">
-            <Link onClick={desactiveMenu} href={"/videos"}>
-              Videoteca
-            </Link>
-          </li>
-
-          <li className="p-4 text-lg font-bold text-center">
-            <Link onClick={desactiveMenu} href={"/books"}>
-              Libros
-            </Link>
-          </li>
-          <li className="p-4 text-lg font-bold text-center">
-            <Link onClick={desactiveMenu} href={"/movies"}>
-              Película
-            </Link>
-          </li>
-          <li className="p-4 text-lg font-bold text-center">
-            <Link onClick={desactiveMenu} href={"/users"}>
-              Usuarios
-            </Link>
-          </li>
-        </ul>
-      </div>
-    );
-  }
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" : pathname?.startsWith(href);
 
   return (
     <>
-      <header className="flex flex-row items-center justify-between w-screen px-4 bg-primary">
-        <div onClick={handleClick} className="lg:hidden">
-          <RxHamburgerMenu color={"white"} size={28} />
-        </div>
+      <header className="sticky top-0 z-40 w-full bg-primary shadow-md">
+        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 md:px-6">
+          <Link
+            href={"/"}
+            className="flex flex-row items-center gap-2 shrink-0"
+          >
+            <Image src={Logo} alt="Logo" width={44} height={44} />
+            <h1 className="hidden text-lg font-semibold text-white sm:block">
+              Centro Documental
+            </h1>
+          </Link>
 
-        <nav className="hidden lg:flex text-white">
-          <ul className="flex flex-row">
-            <li className="p-4 text-lg font-bold text-center">
-              <Link href={"/"}>Inicio</Link>
-            </li>
+          <nav className="hidden lg:flex">
+            <ul className="flex flex-row items-center gap-1">
+              {navLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className={`block rounded-md px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 ${
+                      isActive(link.href) ? "bg-white/15" : ""
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
 
-            <li className="p-4 text-lg font-bold text-center">
-              <Link href={"/library"}>Biblioteca</Link>
-            </li>
-            <li className="p-4 text-lg font-bold text-center">
-              <Link href={"/videos"}>Videoteca</Link>
-            </li>
+          <div className="flex flex-row items-center gap-3">
+            {!isLogged && (
+              <Link
+                href={"/login"}
+                className="hidden items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 sm:flex"
+              >
+                <CiLogin size={20} />
+                Iniciar Sesión
+              </Link>
+            )}
+            {isLogged && (
+              <button
+                onClick={handleLogout}
+                aria-label="Cerrar sesión"
+                className="hidden items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 sm:flex"
+              >
+                <CiLogout size={20} />
+                Cerrar Sesión
+              </button>
+            )}
 
-            <li className="p-4 text-lg font-bold text-center">
-              <Link href={"/books"}>Libros</Link>
-            </li>
-            <li className="p-4 text-lg font-bold text-center">
-              <Link href={"/movies"}>Película</Link>
-            </li>
-            <li className="p-4 text-lg font-bold text-center">
-              <Link href={"/users"}>Usuarios</Link>
-            </li>
-          </ul>
-        </nav>
-
-        <div className="flex flex-row items-center justify-center gap-5">
-          <section className="flex flex-row items-center justify-center text-secondary-a">
-            <Image src={Logo} alt="Logo" width={80} height={80} />
-            <h1 className="text-white">Centro Documental</h1>
-          </section>
-          {!isLogged && (
-            <Link
-              href={"/login"}
-              className="flex flex-col justify-center items-center gap-1 cursor-pointer"
+            <button
+              onClick={handleClick}
+              aria-label="Abrir menú"
+              className="rounded-md p-1.5 text-white transition-colors hover:bg-white/10 lg:hidden"
             >
-              <CiLogin size={24} color="white" />
-              <p className="text-white text-[12px]">Iniciar Sesión</p>
-            </Link>
-          )}
-          {isLogged && (
-            <CiLogout
-              onClick={handleLogout}
-              size={35}
-              color="white"
-              className="cursor-pointer"
-            />
-          )}
+              <RxHamburgerMenu size={26} />
+            </button>
+          </div>
         </div>
       </header>
+
+      <div
+        className={`fixed inset-0 z-50 lg:hidden ${
+          active ? "pointer-events-auto" : "pointer-events-none"
+        }`}
+      >
+        <div
+          onClick={handleClick}
+          className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
+            active ? "opacity-100" : "opacity-0"
+          }`}
+        />
+
+        <div
+          className={`absolute right-0 top-0 flex h-full w-72 max-w-[80vw] flex-col bg-primary shadow-xl transition-transform duration-300 ${
+            active ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <div className="flex items-center justify-between px-5 py-4">
+            <span className="text-base font-semibold text-white">Menú</span>
+            <button
+              onClick={handleClick}
+              aria-label="Cerrar menú"
+              className="rounded-md p-1 text-white transition-colors hover:bg-white/10"
+            >
+              <IoClose size={24} />
+            </button>
+          </div>
+
+          <nav className="flex flex-1 flex-col overflow-y-auto px-3 py-2">
+            <ul className="flex flex-col gap-1">
+              {navLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    onClick={desactiveMenu}
+                    href={link.href}
+                    className={`block rounded-md px-3 py-3 text-base font-medium text-white transition-colors hover:bg-white/10 ${
+                      isActive(link.href) ? "bg-white/15" : ""
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <div className="border-t border-white/10 px-3 py-4">
+            {!isLogged && (
+              <Link
+                onClick={desactiveMenu}
+                href={"/login"}
+                className="flex items-center gap-2 rounded-md px-3 py-3 text-base font-medium text-white transition-colors hover:bg-white/10"
+              >
+                <CiLogin size={22} />
+                Iniciar Sesión
+              </Link>
+            )}
+            {isLogged && (
+              <button
+                onClick={() => {
+                  desactiveMenu();
+                  handleLogout();
+                }}
+                className="flex w-full items-center gap-2 rounded-md px-3 py-3 text-base font-medium text-white transition-colors hover:bg-white/10"
+              >
+                <CiLogout size={22} />
+                Cerrar Sesión
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </>
   );
 };
