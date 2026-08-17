@@ -2,6 +2,7 @@
 
 import CardBook from "@/component/CardBook";
 import TextField from "@/component/TextField/TextField";
+import SelectField from "@/component/SelectField/SelectField";
 import { Book } from "@/types";
 import {
   fetchBooks,
@@ -28,14 +29,25 @@ const Index = () => {
 
   useEffect(() => {
     setValue("search", "");
+    setValue("shelf", "");
     if (booksStatus === "idle") dispatch(fetchBooks());
     if (loansStatus === "idle") dispatch(fetchLoans());
   }, [dispatch, setValue, booksStatus, loansStatus]);
 
+  const shelfOptions = [
+    { value: "1", label: "Repisa 1" },
+    { value: "2", label: "Repisa 2" },
+  ];
+
   const search = watch("search") || "";
-  const filteredBooks = books.filter((book: Book) =>
-    book.title?.toLowerCase().includes(search.toLowerCase())
-  );
+  const shelfFilter = watch("shelf") || "";
+  const filteredBooks = books.filter((book: Book) => {
+    const matchesSearch = book.title
+      ?.toLowerCase()
+      .includes(search.toLowerCase());
+    const matchesShelf = !shelfFilter || book.location?.shelf === shelfFilter;
+    return matchesSearch && matchesShelf;
+  });
 
   const loanedBookIds = useMemo(
     () =>
@@ -55,15 +67,24 @@ const Index = () => {
     <div className="mx-auto w-full max-w-7xl">
       <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-2xl font-bold text-gray-800">Biblioteca</h2>
-        <div className="w-full sm:w-[220px] lg:w-[320px]">
-          <TextField
-            label="Búsqueda"
-            placeholder="Buscar por título..."
-            value={watch("search")}
-            type="text"
-            isLabel={false}
-            {...register("search")}
-          />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="w-full sm:w-[220px] lg:w-[280px]">
+            <TextField
+              label="Búsqueda"
+              placeholder="Buscar por título..."
+              value={watch("search")}
+              type="text"
+              isLabel={false}
+              {...register("search")}
+            />
+          </div>
+          <div className="w-full sm:w-[150px]">
+            <SelectField
+              placeholder="Todas las repisas"
+              options={shelfOptions}
+              register={register("shelf")}
+            />
+          </div>
         </div>
       </div>
 

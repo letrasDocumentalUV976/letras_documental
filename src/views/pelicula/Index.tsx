@@ -3,7 +3,6 @@
 import CardMovie from "@/component/CardMovie";
 import LinkButton from "@/component/LinkButton/LinkButton";
 import TextField from "@/component/TextField/TextField";
-import SelectField from "@/component/SelectField/SelectField";
 import { Movie } from "@/types";
 import {
   deleteMovie,
@@ -14,7 +13,7 @@ import {
   useV1Selector,
 } from "@/store";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { MdModeEditOutline, MdDelete } from "react-icons/md";
@@ -33,39 +32,13 @@ const Index = () => {
 
   useEffect(() => {
     setValue("search", "");
-    setValue("type", "");
-    setValue("genre", "");
     if (moviesStatus === "idle") dispatch(fetchMovies());
   }, [dispatch, setValue, moviesStatus]);
 
-  const typeOptions = [
-    { value: "original", label: "Original" },
-    { value: "copy", label: "Copia" },
-    { value: "bluray", label: "Blu-ray" },
-  ];
-
-  const genreOptions = useMemo(() => {
-    const genres = new Set<string>();
-    movies.forEach((movie: Movie) => {
-      const genre = movie.genre?.trim();
-      if (genre) genres.add(genre);
-    });
-    return Array.from(genres)
-      .sort((a, b) => a.localeCompare(b))
-      .map((genre) => ({ value: genre, label: genre }));
-  }, [movies]);
-
   const search = watch("search") || "";
-  const typeFilter = watch("type") || "";
-  const genreFilter = watch("genre") || "";
-  const filteredMovies = movies.filter((movie: Movie) => {
-    const matchesSearch = movie.title
-      ?.toLowerCase()
-      .includes(search.toLowerCase());
-    const matchesType = !typeFilter || movie.type === typeFilter;
-    const matchesGenre = !genreFilter || movie.genre === genreFilter;
-    return matchesSearch && matchesType && matchesGenre;
-  });
+  const filteredMovies = movies.filter((movie: Movie) =>
+    movie.title?.toLowerCase().includes(search.toLowerCase())
+  );
 
   const confirmDelete = () => {
     if (!pendingDelete) return;
@@ -102,20 +75,6 @@ const Index = () => {
               type="text"
               isLabel={false}
               {...register("search")}
-            />
-          </div>
-          <div className="w-full sm:w-[150px]">
-            <SelectField
-              placeholder="Todos los tipos"
-              options={typeOptions}
-              register={register("type")}
-            />
-          </div>
-          <div className="w-full sm:w-[160px]">
-            <SelectField
-              placeholder="Todos los géneros"
-              options={genreOptions}
-              register={register("genre")}
             />
           </div>
           <LinkButton href="/movies/add" text="Agregar Película" />
