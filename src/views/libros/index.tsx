@@ -3,6 +3,7 @@
 import CardBook from "@/component/CardBook";
 import LinkButton from "@/component/LinkButton/LinkButton";
 import TextField from "@/component/TextField/TextField";
+import SelectField from "@/component/SelectField/SelectField";
 import { Book } from "@/types";
 import {
   deleteBook,
@@ -37,14 +38,47 @@ const Index = () => {
 
   useEffect(() => {
     setValue("search", "");
+    setValue("type", "");
+    setValue("shelf", "");
     if (booksStatus === "idle") dispatch(fetchBooks());
     if (loansStatus === "idle") dispatch(fetchLoans());
   }, [dispatch, setValue, booksStatus, loansStatus]);
 
+  const typeOptions = useMemo(() => {
+    const types = new Set<string>();
+    books.forEach((book: Book) =>
+      book.type
+        ?.split(",")
+        .map((type) => type.trim())
+        .filter(Boolean)
+        .forEach((type) => types.add(type))
+    );
+    return Array.from(types)
+      .sort((a, b) => a.localeCompare(b))
+      .map((type) => ({ value: type, label: type }));
+  }, [books]);
+
+  const shelfOptions = [
+    { value: "1", label: "Repisa 1" },
+    { value: "2", label: "Repisa 2" },
+  ];
+
   const search = watch("search") || "";
-  const filteredBooks = books.filter((book: Book) =>
-    book.title?.toLowerCase().includes(search.toLowerCase())
-  );
+  const typeFilter = watch("type") || "";
+  const shelfFilter = watch("shelf") || "";
+  const filteredBooks = books.filter((book: Book) => {
+    const matchesSearch = book.title
+      ?.toLowerCase()
+      .includes(search.toLowerCase());
+    const matchesType =
+      !typeFilter ||
+      book.type
+        ?.split(",")
+        .map((type) => type.trim().toLowerCase())
+        .includes(typeFilter.toLowerCase());
+    const matchesShelf = !shelfFilter || book.location?.shelf === shelfFilter;
+    return matchesSearch && matchesType && matchesShelf;
+  });
 
   const loanedBookIds = useMemo(
     () =>
@@ -86,7 +120,7 @@ const Index = () => {
       <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-2xl font-bold text-gray-800">Libros</h2>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="w-full sm:w-[220px] lg:w-[320px]">
+          <div className="w-full sm:w-[220px] lg:w-[280px]">
             <TextField
               label="Búsqueda"
               placeholder="Buscar por título..."
@@ -94,6 +128,20 @@ const Index = () => {
               type="text"
               isLabel={false}
               {...register("search")}
+            />
+          </div>
+          <div className="w-full sm:w-[160px]">
+            <SelectField
+              placeholder="Todos los tipos"
+              options={typeOptions}
+              register={register("type")}
+            />
+          </div>
+          <div className="w-full sm:w-[150px]">
+            <SelectField
+              placeholder="Todas las repisas"
+              options={shelfOptions}
+              register={register("shelf")}
             />
           </div>
           <LinkButton href="/books/add" text="Agregar Libro" />
