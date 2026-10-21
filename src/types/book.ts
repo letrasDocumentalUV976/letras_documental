@@ -20,6 +20,7 @@ export interface Book {
   image: string;
   quantity?: number;
   location: BookLocation;
+  isActive: boolean;
 }
 
-export type BookInput = CreateInput<Book>;
+export type BookInput = Omit<CreateInput<Book>, "isActive">;
