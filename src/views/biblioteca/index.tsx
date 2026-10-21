@@ -65,10 +65,10 @@ const Index = () => {
 
   return (
     <div className="mx-auto w-full max-w-7xl">
-      <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
         <h2 className="text-2xl font-bold text-gray-800">Biblioteca</h2>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="w-full sm:w-[220px] lg:w-[280px]">
+          <div className="w-full sm:flex-1 lg:w-[280px] lg:flex-none">
             <TextField
               label="Búsqueda"
               placeholder="Buscar por título..."
@@ -78,7 +78,7 @@ const Index = () => {
               {...register("search")}
             />
           </div>
-          <div className="w-full sm:w-[150px]">
+          <div className="w-full sm:w-[200px] sm:shrink-0">
             <SelectField
               placeholder="Todas las repisas"
               options={shelfOptions}
