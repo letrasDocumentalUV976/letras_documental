@@ -30,7 +30,7 @@ const SelectField = ({
       )}
       <div className="relative">
         <select
-          className="w-full cursor-pointer appearance-none rounded-md border border-gray-300 bg-transparent px-3 py-2 pr-9 text-gray-800 outline-none transition-colors hover:border-gray-400 focus:border-primary"
+          className="w-full cursor-pointer appearance-none truncate rounded-md border border-gray-300 bg-transparent px-3 py-2 pr-9 text-gray-800 outline-none transition-colors hover:border-gray-400 focus:border-primary"
           {...register}
         >
           <option value="">{placeholder}</option>

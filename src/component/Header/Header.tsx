@@ -59,7 +59,7 @@ const Header = () => {
     setActive(false);
   };
 
-  const navLinks = isLogged ? [...privateLinks, ...publicLinks] : publicLinks;
+  const navLinks = isLogged ? privateLinks : publicLinks;
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname?.startsWith(href);
